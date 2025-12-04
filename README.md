@@ -1,6 +1,6 @@
 # NeoCognito 🧠
 
-**Personal Knowledge Management (PKM) Ecosystem** designed for Data Scientists and developers in Linux (Arch-based) environments, focusing on **reducing cognitive latency** and **object permanence** (ADHD/ASD Friendly).
+**Personal Knowledge Management (PKM) Ecosystem** designed for me in Linux (Arch-based) environment, focusing on **Zettelkasten Philosophy** and **GTD method**.
 
 ---
 
@@ -48,14 +48,14 @@ yay -S walker-bin
 ```
 
 ### 2. Setup (Codebase)
-The scripts are located in `~/Dev_Pro/NeoCognito/scripts`. Create the symbolic links:
+The scripts are located in `~/NeoCognito/scripts`. Create the symbolic links:
 
 ```bash
-ln -sf ~/Dev_Pro/NeoCognito/scripts/capture.sh ~/.local/bin/capture.sh
-ln -sf ~/Dev_Pro/NeoCognito/scripts/autosave.sh ~/.local/bin/autosave.sh
-ln -sf ~/Dev_Pro/NeoCognito/scripts/launch_wall.sh ~/.local/bin/launch_wall.sh
-ln -sf ~/Dev_Pro/NeoCognito/scripts/daily_review.sh ~/.local/bin/daily_review.sh
-ln -sf ~/Dev_Pro/NeoCognito/scripts/mark_task.sh ~/.local/bin/mark_task.sh
+ln -sf ~/NeoCognito/scripts/capture.sh ~/.local/bin/capture.sh
+ln -sf ~/NeoCognito/scripts/autosave.sh ~/.local/bin/autosave.sh
+ln -sf ~/NeoCognito/scripts/launch_wall.sh ~/.local/bin/launch_wall.sh
+ln -sf ~/NeoCognito/scripts/daily_review.sh ~/.local/bin/daily_review.sh
+ln -sf ~/NeoCognito/scripts/mark_task.sh ~/.local/bin/mark_task.sh
 ```
 
 *Note: `render_bold.sh` is used internally by Conky and does not require a symlink in `~/.local/bin`.*
@@ -97,7 +97,7 @@ ln -sf ~/Dev_Pro/NeoCognito/scripts/mark_task.sh ~/.local/bin/mark_task.sh
 The script performs `git add/commit` locally. Can be scheduled via cron or Systemd Timer.
 
 ### Visual Customization
-Edit `~/Dev_Pro/NeoCognito/config/conky/neocognito.conf` to change colors, fonts, or monitor (`xinerama_head`).
+Edit `~/NeoCognito/config/conky/neocognito.conf` to change colors, fonts, or monitor (`xinerama_head`).
 
 ---
 
@@ -105,8 +105,8 @@ Edit `~/Dev_Pro/NeoCognito/config/conky/neocognito.conf` to change colors, fonts
 
 To use NeoCognito across multiple machines, we will implement an "Infrastructure as Code" approach:
 
-1.  **Codebase (`~/Dev_Pro/NeoCognito`):**
-    *   Upload `~/Dev_Pro/NeoCognito` to a **Git Remote** (e.g., GitHub, GitLab). This repository contains all scripts and configurations.
+1.  **Codebase (`~/NeoCognito`):**
+    *   Upload `~/NeoCognito` to a **Git Remote** (e.g., GitHub, GitLab). This repository contains all scripts and configurations.
     *   On your other machines, `git clone` this repository.
     *   A `setup.sh` script will be created to automate the installation of dependencies and the creation of symbolic links.
 
@@ -121,4 +121,4 @@ To use NeoCognito across multiple machines, we will implement an "Infrastructure
     *   It will then dynamically load the appropriate Conky configuration (`neocognito_desktop.conf`, `neocognito_laptop.conf`) tailored for each machine's display setup.
 
 ---
-*Developed for high cognitive performance.*
+*Developed for high cognitive performance and thinking on how my brain works, use for inspiration to create your method.*
