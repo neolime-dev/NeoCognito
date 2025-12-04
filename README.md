@@ -49,7 +49,7 @@ yay -S walker-bin
 ```
 
 ### 2. Setup (Codebase)
-Clone the repository to `~/Dev_Pro/NeoCognito` and run the installer:
+Clone the repository to `~/NeoCognito` and run the installer:
 
 ```bash
 git clone https://github.com/neolime-dev/NeoCognito.git ~/NeoCognito
