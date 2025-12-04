@@ -1,0 +1,15 @@
+[Unit]
+Description=NeoCognito Telegram Bot Link
+After=network.target
+
+[Service]
+Type=simple
+# %h resolve para o seu diretório Home (/home/lemondesk)
+WorkingDirectory=%h/Dev_Pro/NeoCognito
+ExecStart=%h/Dev_Pro/NeoCognito/scripts/telegram_bot.py
+Restart=on-failure
+RestartSec=10s
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

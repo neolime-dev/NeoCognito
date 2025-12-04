@@ -1,6 +1,6 @@
 # NeoCognito 🧠
 
-**Personal Knowledge Management (PKM) Ecosystem** designed for me in Linux (Arch-based) environment, focusing on **Zettelkasten Philosophy** and **GTD method**.
+**Personal Knowledge Management (PKM) Ecosystem** designed for Data Scientists and developers in Linux (Arch-based) environments, focusing on **reducing cognitive latency** and **object permanence** (ADHD/ASD Friendly).
 
 ---
 
@@ -17,8 +17,9 @@ The system follows a hybrid **Zettelkasten + GTD** approach, prioritizing captur
 3.  **Persistence Layer (Read-Only):** `launch_wall.sh` (Conky)
     *   *Goal:* Object permanence. Displays Inbox and TODO on the desktop.
     *   *Rendering:* Supports **Bold** (`**text**`) for visual emphasis.
-4.  **Processing Layer (Batch):** Obsidian + `daily_review.sh`
-    *   *Goal:* Refinement, Archiving, and Planning.
+4.  **Mobile Link (Remote):** Telegram Bot
+    *   *Goal:* Capture ideas from anywhere (Phone/Watch) directly to Inbox.
+    *   *Tool:* Python Telegram Bot (Self-hosted).
 
 ---
 
@@ -43,22 +44,44 @@ The system follows a hybrid **Zettelkasten + GTD** approach, prioritizing captur
 
 ### 1. Prerequisites (Arch Linux)
 ```bash
-sudo pacman -S conky git obsidian perl
+sudo pacman -S conky git obsidian perl python
 yay -S walker-bin
 ```
 
 ### 2. Setup (Codebase)
-The scripts are located in `~/NeoCognito/scripts`. Create the symbolic links:
+Clone the repository to `~/Dev_Pro/NeoCognito` and run the installer:
 
 ```bash
-ln -sf ~/NeoCognito/scripts/capture.sh ~/.local/bin/capture.sh
-ln -sf ~/NeoCognito/scripts/autosave.sh ~/.local/bin/autosave.sh
-ln -sf ~/NeoCognito/scripts/launch_wall.sh ~/.local/bin/launch_wall.sh
-ln -sf ~/NeoCognito/scripts/daily_review.sh ~/.local/bin/daily_review.sh
-ln -sf ~/NeoCognito/scripts/mark_task.sh ~/.local/bin/mark_task.sh
+git clone https://github.com/YOUR_USER/NeoCognito.git ~/Dev_Pro/NeoCognito
+cd ~/Dev_Pro/NeoCognito
+./setup.sh
 ```
 
-*Note: `render_bold.sh` is used internally by Conky and does not require a symlink in `~/.local/bin`.*
+This script will:
+*   Create the Vault structure.
+*   Link all scripts to `~/.local/bin`.
+*   Install Python dependencies for the Bot.
+*   Link the systemd service.
+
+---
+
+## 🤖 Mobile Bot Setup
+
+1.  **Get Credentials:**
+    *   Talk to `@BotFather` on Telegram -> Create Bot -> Get **Token**.
+    *   Talk to `@userinfobot` -> Get your **Numeric ID**.
+
+2.  **Configure Secrets:**
+    Edit `~/Dev_Pro/NeoCognito/.env`:
+    ```env
+    TELEGRAM_BOT_TOKEN=your_token_here
+    ALLOWED_USER_ID=your_id_here
+    ```
+
+3.  **Activate Service:**
+    ```bash
+    systemctl --user enable --now neocognito-bot.service
+    ```
 
 ---
 
@@ -68,57 +91,32 @@ ln -sf ~/NeoCognito/scripts/mark_task.sh ~/.local/bin/mark_task.sh
 **Suggested Hotkey:** `Super + Shift + Z`
 *   Captures an idea as a *bullet point* in the Inbox.
 *   Example: `- **14:00** - Raw Idea`
-*   *Does not create a checkbox* (reduces "yet another task" anxiety).
 
 ### ✅ 2. Complete Tasks (`mark_task.sh`)
 **Suggested Hotkey:** `Super + Alt + Z`
-*   Opens a floating menu listing only your pending tasks (`- [ ]`).
-*   Upon selection, marks it as done (`- [x]`) in the file.
-*   The *The Wall* automatically updates shortly after.
+*   Opens a floating menu listing only your pending tasks.
+*   Marks as done (`[x]`) and updates the Wall.
 
 ### 🖥️ 3. The Wall (`launch_wall.sh`)
-**Suggested Hotkey:** `exec-once` in your Hyprland/i3 config.
-*   Displays `00_Inbox.md` (Recent ideas) and `TODO_Today.md` (Day's Focus).
-*   Supports **Bold** text (`**text**`) rendering.
+**Suggested Hotkey:** `exec-once` in WM config.
+*   Displays `00_Inbox.md` and `TODO_Today.md`.
+*   **Hardware Aware:** Detects dual/single monitor setup automatically.
 
 ### 🔄 4. Daily Review (`daily_review.sh`)
-**Suggested Hotkey:** `Super + Shift + Alt + Z` (Run at the start of the day).
-1.  **Checks:** If already run today, it just opens Obsidian.
-2.  **Migrates:**
-    *   Completed tasks `[x]` -> Moved to `99_Archive/Journal/YYYY-MM-DD.md`.
-    *   Pending tasks `[ ]` -> **Retained** in `TODO_Today.md`.
-3.  **Opens:** Launches Obsidian focused on the Vault for you to process the Inbox (turn *Ideas* into *Tasks* or *Zettels*).
+**Suggested Hotkey:** `Super + Shift + Alt + Z` (Start of day).
+1.  **Syncs:** Pulls latest data from Remote Vault.
+2.  **Migrates:** Archives completed tasks, keeps pending ones.
+3.  **Opens:** Launches Obsidian.
 
 ---
 
-## ⚙️ Maintenance & Advanced
+## 🌍 Distributed Setup
 
-### Automatic Backup (`autosave.sh`)
-The script performs `git add/commit` locally. Can be scheduled via cron or Systemd Timer.
+To use NeoCognito across multiple machines:
 
-### Visual Customization
-Edit `~/NeoCognito/config/conky/neocognito.conf` to change colors, fonts, or monitor (`xinerama_head`).
-
----
-
-## 🌍 Distributed Setup (Desktop & Laptop)
-
-To use NeoCognito across multiple machines, we will implement an "Infrastructure as Code" approach:
-
-1.  **Codebase (`~/NeoCognito`):**
-    *   Upload `~/NeoCognito` to a **Git Remote** (e.g., GitHub, GitLab). This repository contains all scripts and configurations.
-    *   On your other machines, `git clone` this repository.
-    *   A `setup.sh` script will be created to automate the installation of dependencies and the creation of symbolic links.
-
-2.  **Data (`~/Vault`):**
-    *   Your `~/Vault` will be managed in a **private Git Repository**.
-    *   This ensures your personal notes remain secure and private.
-    *   The `autosave.sh` script will be enhanced to `git pull --rebase` before committing and `git push` after, ensuring your notes are synchronized across devices.
-    *   The `daily_review.sh` will also include a `git pull --rebase` at startup to fetch the latest changes.
-
-3.  **Hardware Adaptability:**
-    *   The `launch_wall.sh` script will be refactored to detect the environment (e.g., `hostname`, number of monitors).
-    *   It will then dynamically load the appropriate Conky configuration (`neocognito_desktop.conf`, `neocognito_laptop.conf`) tailored for each machine's display setup.
+1.  **Codebase:** Sync this repo (`~/Dev_Pro/NeoCognito`) via GitHub public/private repo.
+2.  **Data:** Sync `~/Vault` via a **PRIVATE** Git repository.
+    *   Scripts (`autosave.sh`, `daily_review.sh`) automatically handle `git pull --rebase` and `git push`.
 
 ---
-*Developed for high cognitive performance and thinking on how my brain works, use for inspiration to create your own method.*
+*Developed for high cognitive performance.*
