@@ -1,6 +1,6 @@
 # NeoCognito 🧠
 
-**Personal Knowledge Management (PKM) Ecosystem** designed for Data Scientists and developers in Linux (Arch-based) environments, focusing on **reducing cognitive latency** and **object permanence** (ADHD/ASD Friendly).
+**Personal Knowledge Management (PKM) Ecosystem** designed for me in Linux (Arch-based) environment, focusing on **Zettelkasten Philosophy** and **GTD method**
 
 ---
 
@@ -52,8 +52,8 @@ yay -S walker-bin
 Clone the repository to `~/Dev_Pro/NeoCognito` and run the installer:
 
 ```bash
-git clone https://github.com/YOUR_USER/NeoCognito.git ~/Dev_Pro/NeoCognito
-cd ~/Dev_Pro/NeoCognito
+git clone https://github.com/neolime-dev/NeoCognito.git ~/NeoCognito
+cd ~/NeoCognito
 ./setup.sh
 ```
 
@@ -72,7 +72,7 @@ This script will:
     *   Talk to `@userinfobot` -> Get your **Numeric ID**.
 
 2.  **Configure Secrets:**
-    Edit `~/Dev_Pro/NeoCognito/.env`:
+    Edit `~/NeoCognito/.env`:
     ```env
     TELEGRAM_BOT_TOKEN=your_token_here
     ALLOWED_USER_ID=your_id_here
@@ -114,7 +114,7 @@ This script will:
 
 To use NeoCognito across multiple machines:
 
-1.  **Codebase:** Sync this repo (`~/Dev_Pro/NeoCognito`) via GitHub public/private repo.
+1.  **Codebase:** Sync this repo (`~/NeoCognito`) via GitHub public/private repo.
 2.  **Data:** Sync `~/Vault` via a **PRIVATE** Git repository.
     *   Scripts (`autosave.sh`, `daily_review.sh`) automatically handle `git pull --rebase` and `git push`.
 
