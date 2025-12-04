@@ -119,4 +119,4 @@ To use NeoCognito across multiple machines:
     *   Scripts (`autosave.sh`, `daily_review.sh`) automatically handle `git pull --rebase` and `git push`.
 
 ---
-*Developed for high cognitive performance.*
+*Developed for high cognitive performance and thinking on how my brain works, use for inspiration to create your own method.*
