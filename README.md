@@ -121,4 +121,4 @@ To use NeoCognito across multiple machines, we will implement an "Infrastructure
     *   It will then dynamically load the appropriate Conky configuration (`neocognito_desktop.conf`, `neocognito_laptop.conf`) tailored for each machine's display setup.
 
 ---
-*Developed for high cognitive performance and thinking on how my brain works, use for inspiration to create your method.*
+*Developed for high cognitive performance and thinking on how my brain works, use for inspiration to create your own method.*
