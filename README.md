@@ -6,24 +6,24 @@ Built entirely in Go using [Bubble Tea](https://github.com/charmbracelet/bubblet
 
 ---
 
-## ✨ Features (v1.0)
+## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/sparkles.svg" width="18" style="vertical-align:middle"> Features (v1.0)
 
 NeoCognito is designed for high-performance knowledge management.
 
-### 🧠 Core Architecture
+### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/brain-circuit.svg" width="18" style="vertical-align:middle"> Core Architecture
 - **Hybrid Storage:** Every entity is a "Block". Markdown files with YAML frontmatter indexed into a local SQLite database using `FTS5` for instant retrieval.
 - **PARA Integration:** Native support for Projects, Areas, Resources, and Archives.
 - **Knowledge Graph:** Force-directed ASCII visualization of `[[wikilinks]]`.
 - **Related Blocks:** Semantic discovery using BM25 scoring via FTS5.
 
-### 💻 TUI Dashboard
+### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/laptop.svg" width="18" style="vertical-align:middle"> TUI Dashboard
 - **Inbox Zero Wizard:** Guided GTD decision flow to process new captures.
 - **Kanban Board:** Visual task management with `h/l` movement.
 - **Zen Mode:** Distraction-free internal editor for deep focus.
 - **Command Palette:** Fuzzy-searchable action menu (`Ctrl+p`).
 - **Heatmap Calendar:** ASCII activity tracking for your knowledge base.
 
-### ⚡ CLI & Workflow
+### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.svg" width="18" style="vertical-align:middle"> CLI & Workflow
 - **Scriptable Capture:** `neocognito add`, `neocognito capture` (popup), and `neocognito clip` (stdin).
 - **Static Export:** Generate a themed HTML website from your notes via `neocognito export`.
 - **Git Auto-Commit:** Transparent version control on every block save.
@@ -32,7 +32,7 @@ NeoCognito is designed for high-performance knowledge management.
 
 ---
 
-## 🚀 Installation
+## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/rocket.svg" width="18" style="vertical-align:middle"> Installation
 
 1. Ensure you have **Go 1.25+** installed.
 2. Clone and build:
@@ -45,9 +45,9 @@ NeoCognito is designed for high-performance knowledge management.
 
 ---
 
-## 📖 Usage Examples & Recipes
+## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/book-open.svg" width="18" style="vertical-align:middle"> Usage Examples & Recipes
 
-### ⚡ Quick Capture
+### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.svg" width="18" style="vertical-align:middle"> Quick Capture
 Capture ideas without breaking your flow.
 
 ```bash
@@ -64,7 +64,7 @@ neocognito capture
 xclip -o | neocognito clip --url "https://news.ycombinator.com"
 ```
 
-### 🧘 Deep Work & Focus
+### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/crosshair.svg" width="18" style="vertical-align:middle"> Deep Work & Focus
 Use Zen mode for distraction-free writing.
 
 ```bash
@@ -75,7 +75,7 @@ neocognito zen blocks/8f2a1b3c.md
 neocognito zen 8f2a1b3c
 ```
 
-### 🌐 Sharing & Publishing
+### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/globe-2.svg" width="18" style="vertical-align:middle"> Sharing & Publishing
 Export your Second Brain as a themed static website.
 
 ```bash
@@ -86,7 +86,7 @@ neocognito export
 neocognito export ./public
 ```
 
-### 🧠 Knowledge Discovery (TUI)
+### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/brain-circuit.svg" width="18" style="vertical-align:middle"> Knowledge Discovery (TUI)
 - **Show Related**: Press `r` on any block to see semantically similar notes (TF-IDF matched).
 - **Open Graph**: Press `7` or select "Graph" in the sidebar to visualize your connections.
 - **GTD Wizard**: Press `Z` from the Inbox to rapidly triage new items:
@@ -97,7 +97,7 @@ neocognito export ./public
 
 ---
 
-## ⌨️ Common Keybindings
+## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/keyboard.svg" width="18" style="vertical-align:middle"> Common Keybindings
 
 | Key | Action |
 | :--- | :--- |
@@ -115,7 +115,7 @@ neocognito export ./public
 
 ---
 
-## 🎨 Customization
+## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/palette.svg" width="18" style="vertical-align:middle"> Customization
 
 Configuration is in `~/.config/neocognito/config.toml`. Run `neocognito config` to see labels.
 
@@ -131,7 +131,7 @@ theme = "tokyo-night" # Or "catppuccin", "nord", "gruvbox", "omarchy"
 
 ---
 
-## 📁 Project Structure
+## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/folder-tree.svg" width="18" style="vertical-align:middle"> Project Structure
 
 - `cmd/`: CLI handlers for capture, clip, and export.
 - `internal/`:
@@ -143,5 +143,5 @@ theme = "tokyo-night" # Or "catppuccin", "nord", "gruvbox", "omarchy"
 
 ---
 
-## ⚖️ License
+## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/scale.svg" width="18" style="vertical-align:middle"> License
 This project is licensed under the GNU General Public License v3.0. See the `LICENSE` file for details.
