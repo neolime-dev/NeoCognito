@@ -1,0 +1,27 @@
+# Go binaries
+neocognito
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Log files
+*.log
+*.err
+
+# Build outputs
+config_output.txt
+test_echo.txt
+repo.txt
+
+# Coverage files
+*.out
+*.cover
+
+# IDE/Editor specific
+.vscode/
+.idea/
+*~
+*.swp
