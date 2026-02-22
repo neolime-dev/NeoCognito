@@ -25,56 +25,45 @@ NeoCognito is designed for high-performance knowledge management.
 
 ### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.svg" width="18" style="vertical-align:middle"> CLI & Workflow
 - **Scriptable Capture:** `neocognito add`, `neocognito capture` (popup), and `neocognito clip` (stdin).
+- **Knowledge Map:** A horizontal mind-map layout for visualizing knowledge flows.
+- **Assinatura Lemon:** Check the "About" section in the Command Palette (`Ctrl+p`).
 - **Static Export:** Generate a themed HTML website from your notes via `neocognito export`.
-- **Git Auto-Commit:** Transparent version control on every block save.
-- **Natural Language Dates:** "Call dentist tomorrow" auto-sets due dates.
 - **Pomodoro Timer:** In-dashboard focus timer with persistence.
 
 ---
 
 ## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/rocket.svg" width="18" style="vertical-align:middle"> Installation
 
-There are two ways to install NeoCognito.
+The recommended way to install NeoCognito is by building from source using the provided `Makefile`. This ensures that your system binary is always correctly updated.
 
-### Using `go install` (Recommended)
+### Quick Install (Recommended)
 
-This is the easiest method. It will build and install the `neocognito` binary in your Go bin directory, making it available everywhere.
-
-1.  Ensure you have **Go 1.25+** installed and your `GOPATH` is set up.
-2.  Run the install command (replace `lemondesk/NeoCognito` with the actual repository path if it's different):
-    ```bash
-    go install github.com/lemondesk/NeoCognito@latest
-    ```
-3.  **Important:** Make sure your Go bin directory is in your system's `PATH`. This is usually `~/go/bin`. If you're not sure, you can add the following line to your shell's startup file (`~/.bashrc`, `~/.zshrc`, etc.) and restart your terminal:
-    ```bash
-    export PATH=$PATH:$(go env GOPATH)/bin
-    ```
-4.  Run the initial config generation:
-    ```bash
-    neocognito config
-    ```
-
-### Building from Source
-
-This method is for developers or those who want to build a specific version from the code.
-
-1.  Clone the repository:
+1.  **Clone the repository:**
     ```bash
     git clone https://github.com/lemondesk/NeoCognito.git
     cd NeoCognito
     ```
-2.  Build the binary:
+
+2.  **Build and Install:**
+    This will compile the project and move the binary to `/usr/bin/neocognito` (requires sudo).
     ```bash
-    go build -o neocognito .
+    make install
     ```
-3.  To make the `neocognito` command available system-wide, move the binary to a directory in your `PATH`. For example:
-    ```bash
-    sudo mv neocognito /usr/local/bin/
-    ```
-4.  Run the initial config generation:
+
+3.  **Run Initial Config:**
     ```bash
     neocognito config
     ```
+
+---
+
+### Developmental Build
+If you just want to test without installing globally:
+```bash
+make build
+# Then run via:
+./neocognito
+```
 
 ---
 

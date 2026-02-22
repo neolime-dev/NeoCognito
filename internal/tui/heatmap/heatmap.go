@@ -236,7 +236,7 @@ func (m Model) View() string {
 
 	return borderStyle.
 		Width(m.Width).
-		Height(m.Height - 2). // adjust for weird sizing if needed
+		Height(m.Height).
 		Render(content)
 }
 

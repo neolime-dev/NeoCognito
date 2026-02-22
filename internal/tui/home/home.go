@@ -178,8 +178,8 @@ func (m Model) View() string {
 	headerBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(styles.Muted).
-		Width(innerW-2). // innerW - 2 because border adds 2 widths.
-		Padding(0, 1).   // Minimal padding for tight header
+		Width(innerW).
+		Padding(0, 1). // Minimal padding for tight header
 		Render(header)
 
 	headerH := lipgloss.Height(headerBox)
@@ -253,10 +253,8 @@ func (m Model) View() string {
 	return lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(borderFg).
-		Width(innerW).
-		Height(innerH).
-		MaxWidth(m.Width).
-		MaxHeight(m.Height).
+		Width(m.Width).
+		Height(m.Height).
 		Render(lipgloss.JoinVertical(lipgloss.Left, headerBox, body))
 }
 

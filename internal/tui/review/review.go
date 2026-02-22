@@ -144,7 +144,7 @@ func (m Model) View() string {
 
 	return borderStyle.
 		Width(m.Width).
-		Height(m.Height - 2). // inner height
+		Height(m.Height).
 		Render(content)
 }
 
