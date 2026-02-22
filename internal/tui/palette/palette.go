@@ -118,7 +118,20 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "up", "k":
+			if m.list.Index() == 0 && m.list.FilterState() != list.Filtering {
+				m.list.Select(len(m.list.VisibleItems()) - 1)
+				return m, nil
+			}
+		case "down", "j":
+			if m.list.Index() == len(m.list.VisibleItems())-1 && m.list.FilterState() != list.Filtering {
+				m.list.Select(0)
+				return m, nil
+			}
 		case "esc", "ctrl+c":
+			if m.list.FilterState() == list.Filtering {
+				break
+			}
 			m.Visible = false
 			return m, func() tea.Msg { return ClosePaletteMsg{} }
 

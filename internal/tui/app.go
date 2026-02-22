@@ -14,6 +14,7 @@ import (
 	"github.com/lemondesk/neocognito/internal/block"
 	"github.com/lemondesk/neocognito/internal/config"
 	"github.com/lemondesk/neocognito/internal/export"
+	"github.com/lemondesk/neocognito/internal/info"
 	"github.com/lemondesk/neocognito/internal/recur"
 	"github.com/lemondesk/neocognito/internal/store"
 	sy "github.com/lemondesk/neocognito/internal/sync"
@@ -641,7 +642,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			_ = a.engine.FullScan()
 			a.refreshPanelData()
 		case "about":
-			a.flashMsg = " NeoCognito was built by Lemon"
+			a.flashMsg = fmt.Sprintf(" NeoCognito %s (built %s) by Lemon", info.Version, info.BuildDate)
 		case "theme-tokyo":
 			a.cfg.Theme = "tokyo-night"
 			if err := a.cfg.Save(); err != nil {

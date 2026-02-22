@@ -139,10 +139,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "j", "down":
 			if m.cursor < len(m.blocks)-1 {
 				m.cursor++
+			} else {
+				m.cursor = 0
 			}
 		case "k", "up":
 			if m.cursor > 0 {
 				m.cursor--
+			} else if len(m.blocks) > 0 {
+				m.cursor = len(m.blocks) - 1
 			}
 		case "a":
 			m.adding = true

@@ -105,6 +105,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			} else if m.dayCur < len(m.days)-1 {
 				m.dayCur++
 				m.blkCur = 0
+			} else {
+				// Wrap to absolute start
+				m.dayCur = 0
+				m.blkCur = 0
 			}
 		case "k", "up":
 			if m.blkCur > 0 {
@@ -114,6 +118,15 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.blkCur = len(m.days[m.dayCur].blocks) - 1
 				if m.blkCur < 0 {
 					m.blkCur = 0
+				}
+			} else {
+				// Wrap to absolute end
+				if len(m.days) > 0 {
+					m.dayCur = len(m.days) - 1
+					m.blkCur = len(m.days[m.dayCur].blocks) - 1
+					if m.blkCur < 0 {
+						m.blkCur = 0
+					}
 				}
 			}
 		case "g":

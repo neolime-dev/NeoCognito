@@ -67,6 +67,16 @@ make build
 
 ---
 
+### ⚠️ Troubleshooting: Command not updating?
+If you run `make install` but still see an old version, you might have another `neocognito` binary shadowing it (e.g., in `~/.local/bin` or `~/go/bin`).
+
+Run this to clean up rogue binaries:
+```bash
+make uninstall-old
+```
+
+---
+
 ## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/book-open.svg" width="18" style="vertical-align:middle"> Usage Examples & Recipes
 
 ### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.svg" width="18" style="vertical-align:middle"> Quick Capture

@@ -150,10 +150,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "j", "down":
 			if m.cursor < len(m.allBlocks)-1 {
 				m.cursor++
+			} else {
+				m.cursor = 0
 			}
 		case "k", "up":
 			if m.cursor > 0 {
 				m.cursor--
+			} else if len(m.allBlocks) > 0 {
+				m.cursor = len(m.allBlocks) - 1
 			}
 		case " ": // Space to cycle status
 			blocks := m.SelectedBlocks()

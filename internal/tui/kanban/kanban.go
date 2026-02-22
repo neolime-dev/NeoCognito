@@ -152,10 +152,17 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			col := m.currentColumn()
 			if m.cursors[m.colFocus] < len(col)-1 {
 				m.cursors[m.colFocus]++
+			} else {
+				m.cursors[m.colFocus] = 0
 			}
 		case "k", "up":
 			if m.cursors[m.colFocus] > 0 {
 				m.cursors[m.colFocus]--
+			} else {
+				col := m.currentColumn()
+				if len(col) > 0 {
+					m.cursors[m.colFocus] = len(col) - 1
+				}
 			}
 		case "g":
 			m.cursors[m.colFocus] = 0

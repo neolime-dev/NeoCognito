@@ -102,18 +102,44 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "j", "down":
+			target := -1
 			for i := m.cursor + 1; i < len(items); i++ {
 				if !items[i].isHeader {
-					m.cursor = i
-					return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[m.cursor].id} }
+					target = i
+					break
 				}
 			}
+			if target == -1 { // Wrap to start
+				for i := 0; i < m.cursor; i++ {
+					if !items[i].isHeader {
+						target = i
+						break
+					}
+				}
+			}
+			if target != -1 {
+				m.cursor = target
+				return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[m.cursor].id} }
+			}
 		case "k", "up":
+			target := -1
 			for i := m.cursor - 1; i >= 0; i-- {
 				if !items[i].isHeader {
-					m.cursor = i
-					return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[m.cursor].id} }
+					target = i
+					break
 				}
+			}
+			if target == -1 { // Wrap to end
+				for i := len(items) - 1; i > m.cursor; i-- {
+					if !items[i].isHeader {
+						target = i
+						break
+					}
+				}
+			}
+			if target != -1 {
+				m.cursor = target
+				return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[m.cursor].id} }
 			}
 		case "1":
 			m.cursor = 1

@@ -95,11 +95,15 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "down", "ctrl+n":
 			if m.cursor < len(m.results)-1 {
 				m.cursor++
+			} else {
+				m.cursor = 0
 			}
 			return m, nil
 		case "up", "ctrl+p":
 			if m.cursor > 0 {
 				m.cursor--
+			} else if len(m.results) > 0 {
+				m.cursor = len(m.results) - 1
 			}
 			return m, nil
 		}
