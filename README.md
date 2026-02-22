@@ -1,4 +1,4 @@
-# ⚡ NeoCognito
+# <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.svg" width="24" style="vertical-align:middle"> NeoCognito
 
 **NeoCognito** is a terminal-native, keyboard-centric "Second Brain" and personal organization system. It combines the resilience and portability of local Markdown files with the speed and querying capabilities of a SQLite database.
 
