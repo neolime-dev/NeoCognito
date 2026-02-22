@@ -57,7 +57,7 @@ The recommended way to install NeoCognito is by building from source using the p
 
 ---
 
-### Developmental Build
+### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/construction.svg" width="18" style="vertical-align:middle"> Developmental Build
 If you just want to test without installing globally:
 ```bash
 make build
@@ -67,7 +67,7 @@ make build
 
 ---
 
-### ⚠️ Troubleshooting: Command not updating?
+### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/triangle-alert.svg" width="18" style="vertical-align:middle"> Troubleshooting: Command not updating?
 If you run `make install` but still see an old version, you might have another `neocognito` binary shadowing it (e.g., in `~/.local/bin` or `~/go/bin`).
 
 Run this to clean up rogue binaries:
@@ -107,7 +107,7 @@ neocognito zen blocks/8f2a1b3c.md
 neocognito zen 8f2a1b3c
 ```
 
-### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/globe-2.svg" width="18" style="vertical-align:middle"> Sharing & Publishing
+### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/globe.svg" width="18" style="vertical-align:middle"> Sharing & Publishing
 Export your Second Brain as a themed static website.
 
 ```bash
