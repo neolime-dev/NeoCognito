@@ -6,7 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/lemondesk/neocognito/internal/block"
 	"github.com/lemondesk/neocognito/internal/tui/styles"
@@ -21,6 +23,7 @@ type OpenEditorMsg struct {
 type Model struct {
 	today      []*block.Block
 	upcoming   []*block.Block
+	recent     []*block.Block
 	monthDates map[int]bool // Days of current month with due tasks
 
 	inboxCount int
@@ -29,7 +32,13 @@ type Model struct {
 	totalPomos int
 
 	cursor       int
-	focusSection int // 0 = today, 1 = upcoming
+	focusSection int // 0 = today, 1 = upcoming, 2 = recent
+
+	viewing       bool
+	viewport      viewport.Model
+	rendered      string
+	renderer      *glamour.TermRenderer
+	rendererWidth int
 
 	Width  int
 	Height int
@@ -37,12 +46,15 @@ type Model struct {
 
 	// Callbacks
 	GetBlocksFn func() ([]*block.Block, error)
+	LookupFn    func(title string) (*block.Block, error)
 }
 
 // New creates a new Home dashboard model.
 func New() Model {
+	vp := viewport.New(0, 0)
 	return Model{
 		monthDates: make(map[int]bool),
+		viewport:   vp,
 	}
 }
 
@@ -93,6 +105,27 @@ func (m *Model) SetBlocks(blocks []*block.Block) {
 		}
 	}
 
+	// Determine Recent Notes (those with content, sorted by modified)
+	m.recent = nil
+	sortable := make([]*block.Block, len(blocks))
+	copy(sortable, blocks)
+	// Sort by modified DESC
+	for i := 0; i < len(sortable); i++ {
+		for j := i + 1; j < len(sortable); j++ {
+			if sortable[i].Modified.Before(sortable[j].Modified) {
+				sortable[i], sortable[j] = sortable[j], sortable[i]
+			}
+		}
+	}
+	for _, b := range sortable {
+		if len(strings.TrimSpace(b.Body)) > 0 && !strings.Contains(b.Title, "Daily —") {
+			m.recent = append(m.recent, b)
+			if len(m.recent) >= 10 {
+				break
+			}
+		}
+	}
+
 	m.clampCursor()
 }
 
@@ -106,10 +139,15 @@ func (m *Model) clampCursor() {
 }
 
 func (m Model) currentList() []*block.Block {
-	if m.focusSection == 0 {
+	switch m.focusSection {
+	case 0:
 		return m.today
+	case 1:
+		return m.upcoming
+	case 2:
+		return m.recent
 	}
-	return m.upcoming
+	return m.today
 }
 
 // Init satisfies tea.Model
@@ -121,6 +159,10 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	if !m.Active {
 		return m, nil
+	}
+
+	if m.viewing {
+		return m.updateViewing(msg)
 	}
 
 	switch msg := msg.(type) {
@@ -135,20 +177,22 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.cursor--
 			}
 		case "tab", "right", "l":
-			if m.focusSection == 0 {
-				m.focusSection = 1
-				m.clampCursor()
-			}
+			m.focusSection = (m.focusSection + 1) % 3
+			m.clampCursor()
 		case "shift+tab", "left", "h":
-			if m.focusSection == 1 {
-				m.focusSection = 0
-				m.clampCursor()
+			m.focusSection--
+			if m.focusSection < 0 {
+				m.focusSection = 2
 			}
+			m.clampCursor()
 		case "enter":
 			list := m.currentList()
 			if len(list) > 0 && m.cursor < len(list) {
 				b := list[m.cursor]
-				if b.FilePath != "" {
+				if len(strings.TrimSpace(b.Body)) > 0 {
+					m.renderBlock(b)
+					m.viewing = true
+				} else if b.FilePath != "" {
 					return m, func() tea.Msg { return OpenEditorMsg{FilePath: b.FilePath} }
 				}
 			}
@@ -157,10 +201,106 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m Model) updateViewing(msg tea.Msg) (Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc", "backspace", "q":
+			m.viewing = false
+			return m, nil
+		}
+	}
+	var cmd tea.Cmd
+	m.viewport, cmd = m.viewport.Update(msg)
+	return m, cmd
+}
+
+func (m *Model) renderBlock(b *block.Block) {
+	var content strings.Builder
+	content.WriteString("# " + b.Title + "\n\n")
+	if len(b.Tags) > 0 {
+		content.WriteString("Tags: " + strings.Join(b.Tags, ", ") + "\n\n")
+	}
+	content.WriteString("---\n\n")
+
+	body := m.expandTransclusions(b.Body)
+	content.WriteString(body)
+
+	wrapWidth := m.Width - 6
+	if wrapWidth < 20 {
+		wrapWidth = 20
+	}
+	if m.renderer == nil || m.rendererWidth != wrapWidth {
+		r, err := glamour.NewTermRenderer(
+			glamour.WithStyles(styles.MarkdownStyle()),
+			glamour.WithWordWrap(wrapWidth),
+		)
+		if err == nil {
+			m.renderer = r
+			m.rendererWidth = wrapWidth
+		}
+	}
+
+	if m.renderer != nil {
+		if rendered, err := m.renderer.Render(content.String()); err == nil {
+			m.rendered = rendered
+		} else {
+			m.rendered = content.String()
+		}
+	} else {
+		m.rendered = content.String()
+	}
+
+	m.viewport.SetContent(m.rendered)
+	m.viewport.GotoTop()
+}
+
+func (m *Model) expandTransclusions(text string) string {
+	if m.LookupFn == nil {
+		return text
+	}
+	for {
+		start := strings.Index(text, "![[")
+		if start == -1 {
+			break
+		}
+		end := strings.Index(text[start:], "]]")
+		if end == -1 {
+			break
+		}
+		end += start
+		reftitle := text[start+3 : end]
+		replacement := "*[could not resolve: " + reftitle + "]*"
+		if ref, err := m.LookupFn(reftitle); err == nil && ref != nil {
+			replacement = "> **" + ref.Title + "**\n>\n"
+			for _, line := range strings.Split(ref.Body, "\n") {
+				replacement += "> " + line + "\n"
+			}
+		}
+		text = text[:start] + replacement + text[end+2:]
+	}
+	return text
+}
+
 // View returns the fully rendered Dashboard.
 func (m Model) View() string {
 	if m.Width <= 0 || m.Height <= 0 {
 		return ""
+	}
+
+	if m.viewing {
+		content := lipgloss.NewStyle().
+			Padding(1, 2).
+			Render(m.viewport.View())
+
+		return styles.ActiveBorder.
+			Width(m.Width).
+			Height(m.Height).
+			Render(lipgloss.JoinVertical(lipgloss.Left,
+				styles.TitleStyle.Render("󰋜 Preview"),
+				content,
+				"\n "+styles.DimItemStyle.Render("[Esc] back  [j/k] scroll"),
+			))
 	}
 
 	// 1. Header Row
@@ -202,18 +342,21 @@ func (m Model) View() string {
 	col1W := availColsW * 3 / 5
 	col2W := availColsW - col1W
 
-	availWidgetsH := availBodyH - 4 // Two widgets stacked in left column, minus borders (2+2=4 height)
-	if availWidgetsH < 2 {
-		availWidgetsH = 2
+	// Adjust for three widgets in col1
+	availWidgetsH := availBodyH - 6 // Three widgets stacked in left column, minus borders (3*2=6 height)
+	if availWidgetsH < 3 {
+		availWidgetsH = 3
 	}
 
-	col1H1 := availWidgetsH / 2
-	col1H2 := availWidgetsH - col1H1
+	col1H1 := availWidgetsH / 3
+	col1H2 := availWidgetsH / 3
+	col1H3 := availWidgetsH - col1H1 - col1H2
 
-	// 2. Col 1: Today + Upcoming
+	// 2. Col 1: Today + Upcoming + Recent
 	todayWidget := m.renderTaskList("🎯 Daily Focus", m.today, 0, col1W, col1H1)
 	upcomingWidget := m.renderTaskList("📅 Upcoming", m.upcoming, 1, col1W, col1H2)
-	leftCol := lipgloss.JoinVertical(lipgloss.Left, todayWidget, upcomingWidget)
+	recentWidget := m.renderTaskList("📝 Recent Notes", m.recent, 2, col1W, col1H3)
+	leftCol := lipgloss.JoinVertical(lipgloss.Left, todayWidget, upcomingWidget, recentWidget)
 
 	// 3. Col 2: Calendar + Summary + Shortcuts
 	var rightStack []string
@@ -428,4 +571,7 @@ func (m Model) renderCalendar(w int) string {
 func (m *Model) SetSize(w, h int) {
 	m.Width = w
 	m.Height = h
+
+	m.viewport.Width = w - 4
+	m.viewport.Height = h - 6
 }

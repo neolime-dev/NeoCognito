@@ -136,7 +136,7 @@ func (m *Model) renderBlock(b *block.Block) {
 	}
 	if m.renderer == nil || m.rendererWidth != wrapWidth {
 		r, err := glamour.NewTermRenderer(
-			glamour.WithStandardStyle("dark"),
+			glamour.WithStyles(styles.MarkdownStyle()),
 			glamour.WithWordWrap(wrapWidth),
 		)
 		if err == nil {

@@ -135,7 +135,7 @@ func (m *Model) renderContent() {
 	content := "# " + m.block.Title + "\n\n" + m.block.Body
 
 	renderer, err := glamour.NewTermRenderer(
-		glamour.WithAutoStyle(),
+		glamour.WithStyles(styles.MarkdownStyle()),
 		glamour.WithWordWrap(m.Width-6),
 	)
 	if err != nil {

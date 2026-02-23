@@ -212,6 +212,8 @@ func NewApp(st *store.Store, engine *sy.Engine, cfg *config.Config) App {
 		return b, nil
 	}
 	app.projects.LookupFn = app.wiki.LookupFn
+	app.inbox.LookupFn = app.wiki.LookupFn
+	app.home.LookupFn = app.wiki.LookupFn
 
 	// Graph connections
 	app.graph.BacklinksFn = func(blockID string) ([]*block.Block, error) {
