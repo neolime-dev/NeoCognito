@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Nerd Font icon migration — all emoji replaced with `nf-md-*` glyphs across every TUI panel for consistent rendering in any Nerd Font terminal.
+- Home dashboard enhancements: mini-calendar, daily focus list, upcoming tasks, recent notes, session stats, and pomodoro bar all visible at a glance.
+- Session-scoped pomodoro counter wired from the timer to the home dashboard.
+
+### Changed
+- `sync.Engine.maybeGitCommit` now runs in a background goroutine, eliminating the lag spike when closing the daily note editor.
+- Removed redundant `IndexFile` call from `openDailyNote`.
+
+### Fixed
+- `NormalModeStyle` (vim mode pill) was incorrectly used for the date header and inbox stat count on the home dashboard; replaced with `PrimaryStyle` / `SelectedItemStyle`.
+- `%-10s` format verb applied to ANSI-rendered strings in home Quick Actions and GTD options caused visual misalignment; fixed by padding the raw string before styling.
+- GTD "Is this actionable?" prompt now uses `AccentStyle` instead of the vim-mode pill style.
+- Kanban empty-column state now reads "No tasks yet" instead of the bare "Empty".
+- Removed dead `borderColor` helper and unused `lipgloss` import from `sidebar`.
+- Removed duplicate `TextStyle` assignment in `inbox`.
+
 ## [1.1.0] - 2026-02-26
 
 ### Added

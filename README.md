@@ -6,7 +6,7 @@ Built entirely in Go using [Bubble Tea](https://github.com/charmbracelet/bubblet
 
 ---
 
-## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/sparkles.svg" width="18" style="vertical-align:middle"> Features (v1.0)
+## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/sparkles.svg" width="18" style="vertical-align:middle"> Features
 
 NeoCognito is designed for high-performance knowledge management.
 
@@ -17,8 +17,10 @@ NeoCognito is designed for high-performance knowledge management.
 - **Related Blocks:** Semantic discovery using BM25 scoring via FTS5.
 
 ### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/laptop.svg" width="18" style="vertical-align:middle"> TUI Dashboard
+- **Home Dashboard:** Calendar, daily focus list, upcoming tasks, recent notes, and session stats at a glance.
 - **Inbox Zero Wizard:** Guided GTD decision flow to process new captures.
-- **Kanban Board:** Visual task management with `h/l` movement.
+- **Kanban Board:** Visual task management with `h/l` column movement.
+- **Pomodoro Timer:** In-dashboard focus timer with session tracking.
 - **Zen Mode:** Distraction-free internal editor for deep focus.
 - **Command Palette:** Fuzzy-searchable action menu (`Ctrl+p`).
 - **Heatmap Calendar:** ASCII activity tracking for your knowledge base.
@@ -26,9 +28,15 @@ NeoCognito is designed for high-performance knowledge management.
 ### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.svg" width="18" style="vertical-align:middle"> CLI & Workflow
 - **Scriptable Capture:** `neocognito add`, `neocognito capture` (popup), and `neocognito clip` (stdin).
 - **Knowledge Map:** A horizontal mind-map layout for visualizing knowledge flows.
-- **Assinatura Lemon:** Check the "About" section in the Command Palette (`Ctrl+p`).
 - **Static Export:** Generate a themed HTML website from your notes via `neocognito export`.
-- **Pomodoro Timer:** In-dashboard focus timer with persistence.
+- **Git Auto-commit:** Block changes are committed asynchronously in the background — no UI lag.
+
+---
+
+## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/circle-check.svg" width="18" style="vertical-align:middle"> Requirements
+
+- **Go 1.21+** (only needed if building from source)
+- **A [Nerd Font](https://www.nerdfonts.com/)** configured in your terminal emulator — NeoCognito uses `nf-md-*` glyphs for all icons. Recommended: `JetBrainsMono Nerd Font`, `FiraCode Nerd Font`, or any other complete Nerd Font variant.
 
 ---
 
