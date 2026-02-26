@@ -1,39 +1,46 @@
-# Como Contribuir com o NeoCognito
+# Contributing to NeoCognito
 
-Primeiramente, obrigado pelo seu interesse em contribuir com o NeoCognito! Estamos felizes em ter você aqui. Toda contribuição é bem-vinda, desde a correção de um simples erro de digitação até a implementação de uma nova funcionalidade.
+First of all, thank you for your interest in contributing to NeoCognito! We are happy to have you here. All contributions are welcome, from fixing a simple typo to implementing a new feature.
 
-## Como Começar
+> Also available in: [Português (pt-BR)](CONTRIBUTING.pt-BR.md)
 
-1.  **Fork o Repositório:** Clique no botão "Fork" no canto superior direito da página do repositório no GitHub para criar uma cópia sua.
-2.  **Clone seu Fork:** `git clone https://github.com/SEU-USUARIO/NeoCognito.git`
-3.  **Crie uma Branch:** `git checkout -b minha-feature-incrivel` (Use um nome descritivo).
-4.  **Faça suas Alterações:** Implemente sua funcionalidade ou correção de bug.
-5.  **Commit suas Alterações:** `git commit -m "feat: Adiciona funcionalidade incrível"` (Veja nosso guia de mensagens de commit abaixo).
-6.  **Envie para seu Fork:** `git push origin minha-feature-incrivel`
-7.  **Abra um Pull Request:** No GitHub, vá para o repositório original e abra um "Pull Request" com uma descrição clara de suas alterações.
+## Getting Started
 
-## Guia para Pull Requests
+1. **Fork the Repository:** Click the "Fork" button in the top-right corner of the repository page on GitHub to create your own copy.
+2. **Clone your Fork:** `git clone https://github.com/YOUR-USERNAME/NeoCognito.git`
+3. **Create a Branch:** `git checkout -b my-awesome-feature` (use a descriptive name).
+4. **Make your Changes:** Implement your feature or bug fix.
+5. **Commit your Changes:** `git commit -m "feat: Add awesome feature"` (see our commit message guide below).
+6. **Push to your Fork:** `git push origin my-awesome-feature`
+7. **Open a Pull Request:** On GitHub, go to the original repository and open a Pull Request with a clear description of your changes.
 
-- **Mantenha a Simplicidade:** Prefira pull requests pequenos e focados. Não agrupe várias funcionalidades em um único PR.
-- **Escreva uma Boa Descrição:** Explique o "quê" e o "porquê" de suas alterações. Se o seu PR resolve uma `Issue` existente, mencione o número dela (ex: `Resolve #123`).
-- **Código Limpo:** Certifique-se de que seu código segue as convenções do Go. Rode `go fmt` e `go vet` antes de fazer o commit para garantir a qualidade.
-- **Seja Paciente:** Faremos o nosso melhor para revisar seu PR o mais rápido possível.
+## Pull Request Guide
 
-## Padrão de Mensagens de Commit
+- **Keep it focused:** Prefer small, focused pull requests. Do not bundle multiple features into a single PR.
+- **Write a good description:** Explain the *what* and the *why* of your changes. If your PR resolves an existing issue, reference it (e.g. `Closes #123`).
+- **Clean code:** Make sure your code follows Go conventions. Run `go fmt` and `go vet` before committing.
+- **Be patient:** We will do our best to review your PR as quickly as possible.
 
-Usamos um padrão para as mensagens de commit para manter o histórico limpo e organizado. Por favor, siga este formato:
+## Commit Message Convention
 
-`<tipo>: <assunto>`
+We follow a lightweight conventional-commit style to keep the history clean and readable:
 
-**Tipos comuns:**
--   `feat`: Uma nova funcionalidade.
--   `fix`: Uma correção de bug.
--   `docs`: Alterações na documentação.
--   `style`: Alterações que não afetam o significado do código (espaços, formatação, etc).
--   `refactor`: Uma alteração de código que não corrige um bug nem adiciona uma funcionalidade.
--   `test`: Adicionando testes ou corrigindo testes existentes.
--   `chore`: Alterações em processos de build, ferramentas auxiliarias, etc.
+```
+<type>: <subject>
+```
 
-**Exemplo:** `feat: Adiciona suporte para temas personalizados no config.toml`
+**Common types:**
 
-Obrigado mais uma vez por sua contribuição!
+| Type | When to use |
+|------|-------------|
+| `feat` | A new feature |
+| `fix` | A bug fix |
+| `docs` | Documentation changes only |
+| `style` | Formatting, missing semicolons, etc. — no logic change |
+| `refactor` | Code change that is neither a fix nor a feature |
+| `test` | Adding or fixing tests |
+| `chore` | Build process, tooling, CI changes |
+
+**Example:** `feat: Add custom theme support to config.toml`
+
+Thank you again for your contribution!

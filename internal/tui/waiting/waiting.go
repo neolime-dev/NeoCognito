@@ -7,8 +7,8 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/lemondesk/neocognito/internal/block"
-	"github.com/lemondesk/neocognito/internal/tui/styles"
+	"github.com/neolime-dev/neocognito/internal/block"
+	"github.com/neolime-dev/neocognito/internal/tui/styles"
 )
 
 // SelectedMsg is sent when the user selects a waiting block to view.

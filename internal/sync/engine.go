@@ -3,32 +3,41 @@ package sync
 
 import (
 	"fmt"
-	"log"
+	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
+	gosync "sync"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/lemondesk/neocognito/internal/block"
-	"github.com/lemondesk/neocognito/internal/config"
-	gitpkg "github.com/lemondesk/neocognito/internal/git"
-	"github.com/lemondesk/neocognito/internal/nldate"
-	"github.com/lemondesk/neocognito/internal/store"
+	"github.com/neolime-dev/neocognito/internal/block"
+	"github.com/neolime-dev/neocognito/internal/config"
+	gitpkg "github.com/neolime-dev/neocognito/internal/git"
+	"github.com/neolime-dev/neocognito/internal/nldate"
+	"github.com/neolime-dev/neocognito/internal/store"
 )
+
+const debounceDelay = 100 * time.Millisecond
 
 // Engine synchronizes Markdown block files with the SQLite index.
 type Engine struct {
 	blocksDir string
 	dataDir   string
-	store     *store.Store
+	store     store.Storer
 	cfg       *config.Config
 	watcher   *fsnotify.Watcher
 	done      chan struct{}
+	logger    *slog.Logger
+
+	debounceMu gosync.Mutex
+	debounce   map[string]*time.Timer
 }
 
 // NewEngine creates a new sync engine for the given blocks directory and store.
-func NewEngine(blocksDir string, st *store.Store, cfg *config.Config) *Engine {
+// By default it logs to stderr; call SetLogger to redirect or silence output.
+func NewEngine(blocksDir string, st store.Storer, cfg *config.Config) *Engine {
 	dataDir := filepath.Dir(blocksDir)
 	return &Engine{
 		blocksDir: blocksDir,
@@ -36,7 +45,18 @@ func NewEngine(blocksDir string, st *store.Store, cfg *config.Config) *Engine {
 		store:     st,
 		cfg:       cfg,
 		done:      make(chan struct{}),
+		debounce:  make(map[string]*time.Timer),
+		logger:    slog.New(slog.NewTextHandler(os.Stderr, nil)),
 	}
+}
+
+// SetLogger replaces the engine's logger. Pass slog.New(slog.NewTextHandler(io.Discard, nil))
+// to silence all output (useful in tests).
+func (e *Engine) SetLogger(l *slog.Logger) {
+	if l == nil {
+		l = slog.New(slog.NewTextHandler(io.Discard, nil))
+	}
+	e.logger = l
 }
 
 // FullScan walks the blocks directory and upserts every .md file into the index.
@@ -51,7 +71,7 @@ func (e *Engine) FullScan() error {
 			return nil
 		}
 		if err := e.indexFile(path); err != nil {
-			log.Printf("warn: failed to index %s: %v", path, err)
+			e.logger.Warn("index failed", "path", path, "err", err)
 			return nil
 		}
 		count++
@@ -60,7 +80,7 @@ func (e *Engine) FullScan() error {
 	if err != nil {
 		return fmt.Errorf("walking blocks dir: %w", err)
 	}
-	log.Printf("sync: indexed %d blocks from %s", count, e.blocksDir)
+	e.logger.Info("full scan complete", "count", count, "dir", e.blocksDir)
 	return nil
 }
 
@@ -110,19 +130,28 @@ func (e *Engine) watchLoop() {
 			if !ok {
 				return
 			}
+
+			// Watch newly created subdirectories
+			if event.Has(fsnotify.Create) {
+				if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
+					_ = e.watcher.Add(event.Name)
+					continue
+				}
+			}
+
 			if !strings.HasSuffix(event.Name, ".md") {
 				continue
 			}
+
 			switch {
 			case event.Has(fsnotify.Write), event.Has(fsnotify.Create):
-				if err := e.indexFile(event.Name); err != nil {
-					log.Printf("sync: error indexing %s: %v", event.Name, err)
-				}
+				e.debounceIndex(event.Name)
 			case event.Has(fsnotify.Remove), event.Has(fsnotify.Rename):
+				e.cancelDebounce(event.Name)
 				b, err := e.store.GetBlockByPath(event.Name)
 				if err == nil && b != nil {
 					if err := e.store.DeleteBlock(b.ID); err != nil {
-						log.Printf("sync: error removing %s: %v", event.Name, err)
+						e.logger.Warn("delete failed", "path", event.Name, "err", err)
 					}
 				}
 			}
@@ -130,10 +159,40 @@ func (e *Engine) watchLoop() {
 			if !ok {
 				return
 			}
-			log.Printf("sync: watcher error: %v", err)
+			e.logger.Warn("watcher error", "err", err)
 		case <-e.done:
 			return
 		}
+	}
+}
+
+// debounceIndex schedules a re-index for the given file after a short delay.
+// If another event arrives for the same file before the delay expires, the
+// timer is reset. This prevents redundant re-indexes from atomic-save editors.
+func (e *Engine) debounceIndex(path string) {
+	e.debounceMu.Lock()
+	defer e.debounceMu.Unlock()
+
+	if t, ok := e.debounce[path]; ok {
+		t.Stop()
+	}
+	e.debounce[path] = time.AfterFunc(debounceDelay, func() {
+		if err := e.indexFile(path); err != nil {
+			e.logger.Warn("reindex failed", "path", path, "err", err)
+		}
+		e.debounceMu.Lock()
+		delete(e.debounce, path)
+		e.debounceMu.Unlock()
+	})
+}
+
+// cancelDebounce cancels any pending debounced index for the given file.
+func (e *Engine) cancelDebounce(path string) {
+	e.debounceMu.Lock()
+	defer e.debounceMu.Unlock()
+	if t, ok := e.debounce[path]; ok {
+		t.Stop()
+		delete(e.debounce, path)
 	}
 }
 
@@ -266,11 +325,11 @@ func (e *Engine) maybeGitCommit(message string) {
 		return
 	}
 	if err := gitpkg.Init(e.dataDir); err != nil {
-		log.Printf("git: init error: %v", err)
+		e.logger.Warn("git op failed", "op", "init", "err", err)
 		return
 	}
 	if err := gitpkg.Commit(e.dataDir, message); err != nil {
-		log.Printf("git: commit error: %v", err)
+		e.logger.Warn("git op failed", "op", "commit", "err", err)
 	}
 }
 

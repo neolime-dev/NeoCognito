@@ -44,8 +44,9 @@ type Block struct {
 	Source      string     `yaml:"source,omitempty"`       // v0.5: URL/origin
 	Created     time.Time  `yaml:"created"`
 	Modified    time.Time  `yaml:"modified"`
-	Body        string     `yaml:"-"`
-	FilePath    string     `yaml:"-"`
+	Body             string `yaml:"-"`
+	BodyPreviewText  string `yaml:"-"` // Truncated preview from the DB index; distinct from Body (full content from disk).
+	FilePath         string `yaml:"-"`
 }
 
 // NextStatus cycles the block status: "" -> todo -> doing -> done -> archived -> todo.
@@ -69,13 +70,14 @@ func (b *Block) IsTask() bool {
 	return b.Status != StatusNone
 }
 
-// BodyPreview returns the first n characters of the body for search snippets.
+// BodyPreview returns the first n characters (runes) of the body for search snippets.
 func (b *Block) BodyPreview(n int) string {
 	body := strings.TrimSpace(b.Body)
-	if len(body) <= n {
+	runes := []rune(body)
+	if len(runes) <= n {
 		return body
 	}
-	return body[:n]
+	return string(runes[:n])
 }
 
 // GenerateID creates a short random hex ID for a new block.

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lemondesk/neocognito/internal/block"
+	"github.com/neolime-dev/neocognito/internal/block"
 )
 
 // Template represents a loaded boilerplate block.

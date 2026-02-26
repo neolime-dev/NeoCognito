@@ -1,0 +1,65 @@
+version: 2
+
+project_name: neocognito
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: neocognito
+    main: ./main.go
+    binary: neocognito
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/neolime-dev/neocognito/internal/info.Version={{.Version}}
+      - -X github.com/neolime-dev/neocognito/internal/info.Commit={{.Commit}}
+      - -X github.com/neolime-dev/neocognito/internal/info.BuildDate={{.Date}}
+
+archives:
+  - id: neocognito
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: tar.gz
+    files:
+      - README.md
+      - LICENSE*
+      - CHANGELOG.md
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^style:"
+      - "^chore:"
+      - "Merge pull request"
+      - "Merge branch"
+  groups:
+    - title: "New Features"
+      regexp: "^feat"
+      order: 0
+    - title: "Bug Fixes"
+      regexp: "^fix"
+      order: 1
+    - title: "Other Changes"
+      order: 999
+
+release:
+  github:
+    owner: neolime-dev
+    name: neocognito
+  draft: false
+  prerelease: auto
+  name_template: "NeoCognito {{.Version}}"

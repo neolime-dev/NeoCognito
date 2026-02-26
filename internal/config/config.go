@@ -46,7 +46,7 @@ func Default() *Config {
 		GitCommit: false,
 		StaleDays: 14,
 		Theme:     "default",
-		SyncCmd:   "git add . && git commit -m 'sync' && git push",
+		SyncCmd:   "git add blocks/ templates/ assets/ && git commit -m 'sync' && git push",
 	}
 }
 
@@ -91,7 +91,7 @@ func WriteDefault() error {
 	defer f.Close()
 
 	tmpl := `# NeoCognito configuration
-# See: https://github.com/lemondesk/neocognito
+# See: https://github.com/neolime-dev/neocognito
 
 # editor = "nvim"
 # data_dir = "~/.local/share/neocognito"
@@ -99,7 +99,7 @@ git_commit  = false
 stale_days  = 14
 theme       = "default"
 # default_tags = ["@inbox"]
-# sync_cmd = "git add . && git commit -m 'sync' && git push"
+# sync_cmd = "git add blocks/ templates/ assets/ && git commit -m 'sync' && git push"
 `
 	_, err = f.WriteString(tmpl)
 	return err

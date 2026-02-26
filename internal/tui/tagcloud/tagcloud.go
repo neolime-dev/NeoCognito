@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/lemondesk/neocognito/internal/store"
-	"github.com/lemondesk/neocognito/internal/tui/styles"
+	"github.com/neolime-dev/neocognito/internal/store"
+	"github.com/neolime-dev/neocognito/internal/tui/styles"
 )
 
 // Model is the tag cloud state.

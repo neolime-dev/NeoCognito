@@ -7,7 +7,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/lemondesk/neocognito/internal/block"
+	"github.com/neolime-dev/neocognito/internal/block"
 )
 
 // Phase represents the current Pomodoro phase.

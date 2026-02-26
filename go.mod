@@ -1,4 +1,4 @@
-module github.com/lemondesk/neocognito
+module github.com/neolime-dev/neocognito
 
 go 1.25.7
 

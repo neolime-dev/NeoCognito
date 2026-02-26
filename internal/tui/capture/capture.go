@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/lemondesk/neocognito/internal/tui/styles"
+	"github.com/neolime-dev/neocognito/internal/tui/styles"
 )
 
 type Msg struct {

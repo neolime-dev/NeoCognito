@@ -6,8 +6,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/lemondesk/neocognito/internal/block"
-	"github.com/lemondesk/neocognito/internal/tui/styles"
+	"github.com/neolime-dev/neocognito/internal/block"
+	"github.com/neolime-dev/neocognito/internal/tui/styles"
 	"github.com/sahilm/fuzzy"
 )
 
@@ -202,10 +202,10 @@ func (m Model) View() string {
 		}
 		sb.WriteString(line + "\n")
 
-		// Display FTS snippet if present (loaded into b.Body)
-		if strings.Contains(b.Body, "»") {
+		// Display FTS snippet if present (loaded into BodyPreviewText from DB)
+		if strings.Contains(b.BodyPreviewText, "»") {
 			// clean up line breaks
-			snippet := strings.ReplaceAll(b.Body, "\n", " ")
+			snippet := strings.ReplaceAll(b.BodyPreviewText, "\n", " ")
 			sb.WriteString(styles.DimItemStyle.Render("      ..."+snippet) + "\n")
 		}
 	}

@@ -10,8 +10,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/lemondesk/neocognito/internal/block"
-	"github.com/lemondesk/neocognito/internal/tui/styles"
+	"github.com/neolime-dev/neocognito/internal/block"
+	"github.com/neolime-dev/neocognito/internal/tui/styles"
 )
 
 // OpenEditorMsg signals the main app to open an editor for a block.
@@ -118,7 +118,7 @@ func (m *Model) SetBlocks(blocks []*block.Block) {
 		}
 	}
 	for _, b := range sortable {
-		if len(strings.TrimSpace(b.Body)) > 0 && !strings.Contains(b.Title, "Daily —") {
+		if len(strings.TrimSpace(b.BodyPreviewText)) > 0 && !strings.Contains(b.Title, "Daily —") {
 			m.recent = append(m.recent, b)
 			if len(m.recent) >= 10 {
 				break
@@ -189,7 +189,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			list := m.currentList()
 			if len(list) > 0 && m.cursor < len(list) {
 				b := list[m.cursor]
-				if len(strings.TrimSpace(b.Body)) > 0 {
+				if len(strings.TrimSpace(b.BodyPreviewText)) > 0 {
 					m.renderBlock(b)
 					m.viewing = true
 				} else if b.FilePath != "" {

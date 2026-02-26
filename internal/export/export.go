@@ -4,15 +4,16 @@ package export
 import (
 	"bytes"
 	"fmt"
+	"html/template"
 	"os"
 	"path/filepath"
-	"text/template"
 
-	"github.com/lemondesk/neocognito/internal/block"
-	"github.com/lemondesk/neocognito/internal/store"
-	"github.com/lemondesk/neocognito/internal/tui/styles"
+	"github.com/neolime-dev/neocognito/internal/block"
+	"github.com/neolime-dev/neocognito/internal/store"
+	"github.com/neolime-dev/neocognito/internal/tui/styles"
 	"github.com/yuin/goldmark"
 )
+// Note: fmt is kept for error formatting in Run.
 
 const htmlTemplate = `
 <!DOCTYPE html>
@@ -106,20 +107,22 @@ const indexTemplate = `
 </html>
 `
 
+type themeCSS struct {
+	Primary, Secondary, Accent, Success, Warning, Muted, Surface, Text, TextDim template.CSS
+}
+
 type exportData struct {
 	Title       string
 	Created     string
 	Modified    string
 	Area        string
 	Tags        []string
-	ContentHTML string
-	Theme       struct {
-		Primary, Secondary, Accent, Success, Warning, Muted, Surface, Text, TextDim string
-	}
+	ContentHTML template.HTML
+	Theme       themeCSS
 }
 
 // Run executes the full site export.
-func Run(st *store.Store, outDir string) error {
+func Run(st store.Storer, outDir string) error {
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err
 	}
@@ -129,30 +132,27 @@ func Run(st *store.Store, outDir string) error {
 		return err
 	}
 
-	themeData := struct {
-		Primary, Secondary, Accent, Success, Warning, Muted, Surface, Text, TextDim string
-	}{
-		Primary:   fmt.Sprint(styles.Primary),
-		Secondary: fmt.Sprint(styles.Secondary),
-		Accent:    fmt.Sprint(styles.Accent),
-		Success:   fmt.Sprint(styles.Success),
-		Warning:   fmt.Sprint(styles.Warning),
-		Muted:     fmt.Sprint(styles.Muted),
-		Surface:   fmt.Sprint(styles.Surface),
-		Text:      fmt.Sprint(styles.Text),
-		TextDim:   fmt.Sprint(styles.TextDim),
+	css := styles.CurrentTheme().CSSTheme()
+	themeData := themeCSS{
+		Primary:   template.CSS(css.Primary),
+		Secondary: template.CSS(css.Secondary),
+		Accent:    template.CSS(css.Accent),
+		Success:   template.CSS(css.Success),
+		Warning:   template.CSS(css.Warning),
+		Muted:     template.CSS(css.Muted),
+		Surface:   template.CSS(css.Surface),
+		Text:      template.CSS(css.Text),
+		TextDim:   template.CSS(css.TextDim),
 	}
 
-	// Fix: styles.Primary is often an AdaptiveColor or Color.
-	// lipgloss.TerminalColor doesn't have a direct string hex export easily without a renderer context.
-	// We'll use a hack to extract the string if it looks like #XXXXXX or just use hardcoded defaults if it fails.
-	// For this version, let's just use the Render hack.
-
-	tmpl, _ := template.New("block").Parse(htmlTemplate)
+	tmpl, err := template.New("block").Parse(htmlTemplate)
+	if err != nil {
+		return fmt.Errorf("parsing block template: %w", err)
+	}
 	md := goldmark.New()
 
 	for _, b := range blocks {
-		// Load full body
+		// soft-fail: skip blocks whose source file cannot be read
 		full, err := block.ParseFile(b.FilePath)
 		if err != nil {
 			continue
@@ -160,7 +160,7 @@ func Run(st *store.Store, outDir string) error {
 
 		var buf bytes.Buffer
 		if err := md.Convert([]byte(full.Body), &buf); err != nil {
-			continue
+			continue // soft-fail: skip blocks whose body cannot be rendered
 		}
 
 		data := exportData{
@@ -169,28 +169,40 @@ func Run(st *store.Store, outDir string) error {
 			Modified:    full.Modified.Format("2006-01-02"),
 			Area:        full.Area,
 			Tags:        full.Tags,
-			ContentHTML: buf.String(),
+			ContentHTML: template.HTML(buf.String()),
 			Theme:       themeData,
 		}
 
 		f, err := os.Create(filepath.Join(outDir, b.ID+".html"))
 		if err != nil {
-			return err
+			return fmt.Errorf("creating %s.html: %w", b.ID, err)
 		}
-		tmpl.Execute(f, data)
+		if err := tmpl.Execute(f, data); err != nil {
+			f.Close()
+			return fmt.Errorf("executing template for %s: %w", b.ID, err)
+		}
 		f.Close()
 	}
 
-	// Index
-	indexTmpl, _ := template.New("index").Parse(indexTemplate)
-	f, _ := os.Create(filepath.Join(outDir, "index.html"))
-	indexTmpl.Execute(f, struct {
+	// Index page
+	indexTmpl, err := template.New("index").Parse(indexTemplate)
+	if err != nil {
+		return fmt.Errorf("parsing index template: %w", err)
+	}
+	f, err := os.Create(filepath.Join(outDir, "index.html"))
+	if err != nil {
+		return fmt.Errorf("creating index.html: %w", err)
+	}
+	if err := indexTmpl.Execute(f, struct {
 		Blocks []*block.Block
-		Theme  any
+		Theme  themeCSS
 	}{
 		Blocks: blocks,
 		Theme:  themeData,
-	})
+	}); err != nil {
+		f.Close()
+		return fmt.Errorf("executing index template: %w", err)
+	}
 	f.Close()
 
 	return nil

@@ -7,16 +7,43 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lemondesk/neocognito/internal/block"
+	"github.com/neolime-dev/neocognito/internal/block"
 
 	_ "modernc.org/sqlite"
 )
+
+// Storer defines the interface for block storage operations.
+// Implementations include the SQLite-backed Store and can include
+// in-memory stores for testing.
+type Storer interface {
+	Close() error
+	UpsertBlock(b *block.Block) error
+	DeleteBlock(id string) error
+	GetBlock(id string) (*block.Block, error)
+	GetBlockByPath(filepath string) (*block.Block, error)
+	GetBlockByTitle(title string) (*block.Block, error)
+	ListBlocks(filter Filter) ([]*block.Block, error)
+	Search(query string) ([]*block.Block, error)
+	GetTags() ([]string, error)
+	GetTagCounts() (map[string]int, error)
+	GetLinksFrom(blockID string) ([]string, error)
+	GetLinksTo(blockID string) ([]string, error)
+	GetGraphEdges() ([]GraphEdge, error)
+	FindRelatedBlocks(target *block.Block, limit int) ([]*block.Block, error)
+	BlockCount() (int, error)
+}
+
+// Verify Store implements Storer at compile time.
+var _ Storer = (*Store)(nil)
 
 // Store wraps an SQLite database for block indexing.
 type Store struct {
 	db *sql.DB
 }
 
+// New opens (or creates) the SQLite database at dbPath, applies all pending
+// schema migrations, and returns a ready-to-use Store. The caller is
+// responsible for calling Close when done.
 func New(dbPath string) (*Store, error) {
 	dsn := fmt.Sprintf("%s?_pragma=busy_timeout=5000&_pragma=journal_mode=WAL&_pragma=synchronous=NORMAL&_pragma=foreign_keys=ON", dbPath)
 	db, err := sql.Open("sqlite", dsn)
@@ -24,10 +51,13 @@ func New(dbPath string) (*Store, error) {
 		return nil, fmt.Errorf("opening database: %w", err)
 	}
 
-	// FIX: Force a single connection to serialize writes at the Go level.
-	// This entirely prevents driver-level SQLite "database is locked" errors
-	// caused by concurrent UI transactions and background sync loops.
-	db.SetMaxOpenConns(1)
+	// WAL mode (set via DSN pragma) allows multiple concurrent readers alongside
+	// one writer. A small connection pool lets the UI and background sync goroutine
+	// run queries concurrently without blocking each other. SQLite itself serializes
+	// writes, so no extra Go-level locking is needed.
+	db.SetMaxOpenConns(4)
+	db.SetMaxIdleConns(4)
+	db.SetConnMaxLifetime(0)
 
 	// Performance PRAGMAs that don't need to be in DSN (though DSN is safer)
 	pragmas := []string{
@@ -53,96 +83,105 @@ func (s *Store) Close() error {
 	return s.db.Close()
 }
 
-// migrate creates the schema if it doesn't exist.
+// migrate runs all pending schema migrations in order.
+// Each migration runs exactly once, tracked by the schema_version table.
 func (s *Store) migrate() error {
-	schema := `
-	CREATE TABLE IF NOT EXISTS blocks (
-		id           TEXT PRIMARY KEY,
-		title        TEXT NOT NULL DEFAULT '',
-		status       TEXT DEFAULT '',
-		due          TEXT,
-		created      TEXT NOT NULL,
-		modified     TEXT NOT NULL,
-		filepath     TEXT NOT NULL UNIQUE,
-		body_preview TEXT DEFAULT '',
-		area         TEXT DEFAULT ''
-	);
-
-	CREATE TABLE IF NOT EXISTS tags (
-		block_id TEXT NOT NULL,
-		tag      TEXT NOT NULL,
-		PRIMARY KEY (block_id, tag),
-		FOREIGN KEY (block_id) REFERENCES blocks(id) ON DELETE CASCADE
-	);
-
-	CREATE TABLE IF NOT EXISTS links (
-		source_id TEXT NOT NULL,
-		target_id TEXT NOT NULL,
-		PRIMARY KEY (source_id, target_id),
-		FOREIGN KEY (source_id) REFERENCES blocks(id) ON DELETE CASCADE
-	);
-	`
-
-	_, err := s.db.Exec(schema)
-	if err != nil {
-		return fmt.Errorf("creating schema: %w", err)
+	// Ensure the version tracking table exists
+	if _, err := s.db.Exec(`CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY)`); err != nil {
+		return fmt.Errorf("creating schema_version table: %w", err)
 	}
 
-	// Hot migration for existing DB
-	if _, err := s.db.Exec("ALTER TABLE blocks ADD COLUMN area TEXT DEFAULT ''"); err != nil {
-		if !strings.Contains(err.Error(), "duplicate column name") {
-			return fmt.Errorf("adding area column: %w", err)
+	var current int
+	row := s.db.QueryRow("SELECT COALESCE(MAX(version), 0) FROM schema_version")
+	if err := row.Scan(&current); err != nil {
+		return fmt.Errorf("reading schema version: %w", err)
+	}
+
+	for _, m := range migrations {
+		if m.version <= current {
+			continue
+		}
+		if _, err := s.db.Exec(m.sql); err != nil {
+			return fmt.Errorf("migration v%d (%s): %w", m.version, m.description, err)
+		}
+		if _, err := s.db.Exec("INSERT INTO schema_version (version) VALUES (?)", m.version); err != nil {
+			return fmt.Errorf("recording migration v%d: %w", m.version, err)
 		}
 	}
-
-	// Now create indexes
-	indexes := `
-	CREATE INDEX IF NOT EXISTS idx_blocks_status ON blocks(status);
-	CREATE INDEX IF NOT EXISTS idx_blocks_due ON blocks(due);
-	CREATE INDEX IF NOT EXISTS idx_blocks_area ON blocks(area);
-	CREATE INDEX IF NOT EXISTS idx_tags_tag ON tags(tag);
-	CREATE INDEX IF NOT EXISTS idx_links_target ON links(target_id);
-	`
-	_, err = s.db.Exec(indexes)
-	if err != nil {
-		return fmt.Errorf("creating indexes: %w", err)
-	}
-
-	// FTS5 virtual table for full-text search
-	fts := `
-	CREATE VIRTUAL TABLE IF NOT EXISTS blocks_fts USING fts5(
-		id UNINDEXED,
-		title,
-		body_preview,
-		content='blocks',
-		content_rowid='rowid'
-	);
-
-	-- Triggers to keep FTS in sync
-	CREATE TRIGGER IF NOT EXISTS blocks_ai AFTER INSERT ON blocks BEGIN
-		INSERT INTO blocks_fts(rowid, id, title, body_preview)
-		VALUES (new.rowid, new.id, new.title, new.body_preview);
-	END;
-
-	CREATE TRIGGER IF NOT EXISTS blocks_ad AFTER DELETE ON blocks BEGIN
-		INSERT INTO blocks_fts(blocks_fts, rowid, id, title, body_preview)
-		VALUES ('delete', old.rowid, old.id, old.title, old.body_preview);
-	END;
-
-	CREATE TRIGGER IF NOT EXISTS blocks_au AFTER UPDATE ON blocks BEGIN
-		INSERT INTO blocks_fts(blocks_fts, rowid, id, title, body_preview)
-		VALUES ('delete', old.rowid, old.id, old.title, old.body_preview);
-		INSERT INTO blocks_fts(rowid, id, title, body_preview)
-		VALUES (new.rowid, new.id, new.title, new.body_preview);
-	END;
-	`
-
-	_, err = s.db.Exec(fts)
-	if err != nil {
-		return fmt.Errorf("creating FTS: %w", err)
-	}
-
 	return nil
+}
+
+type migration struct {
+	version     int
+	description string
+	sql         string
+}
+
+// migrations is the ordered list of schema changes.
+// To add a new migration, append to this slice with the next version number.
+// Never modify or reorder existing migrations.
+var migrations = []migration{
+	{
+		version:     1,
+		description: "initial schema",
+		sql: `
+		CREATE TABLE IF NOT EXISTS blocks (
+			id           TEXT PRIMARY KEY,
+			title        TEXT NOT NULL DEFAULT '',
+			status       TEXT DEFAULT '',
+			due          TEXT,
+			created      TEXT NOT NULL,
+			modified     TEXT NOT NULL,
+			filepath     TEXT NOT NULL UNIQUE,
+			body_preview TEXT DEFAULT '',
+			area         TEXT DEFAULT ''
+		);
+		CREATE TABLE IF NOT EXISTS tags (
+			block_id TEXT NOT NULL,
+			tag      TEXT NOT NULL,
+			PRIMARY KEY (block_id, tag),
+			FOREIGN KEY (block_id) REFERENCES blocks(id) ON DELETE CASCADE
+		);
+		CREATE TABLE IF NOT EXISTS links (
+			source_id TEXT NOT NULL,
+			target_id TEXT NOT NULL,
+			PRIMARY KEY (source_id, target_id),
+			FOREIGN KEY (source_id) REFERENCES blocks(id) ON DELETE CASCADE
+		);
+		CREATE INDEX IF NOT EXISTS idx_blocks_status ON blocks(status);
+		CREATE INDEX IF NOT EXISTS idx_blocks_due ON blocks(due);
+		CREATE INDEX IF NOT EXISTS idx_blocks_area ON blocks(area);
+		CREATE INDEX IF NOT EXISTS idx_tags_tag ON tags(tag);
+		CREATE INDEX IF NOT EXISTS idx_links_target ON links(target_id);
+		`,
+	},
+	{
+		version:     2,
+		description: "full-text search",
+		sql: `
+		CREATE VIRTUAL TABLE IF NOT EXISTS blocks_fts USING fts5(
+			id UNINDEXED,
+			title,
+			body_preview,
+			content='blocks',
+			content_rowid='rowid'
+		);
+		CREATE TRIGGER IF NOT EXISTS blocks_ai AFTER INSERT ON blocks BEGIN
+			INSERT INTO blocks_fts(rowid, id, title, body_preview)
+			VALUES (new.rowid, new.id, new.title, new.body_preview);
+		END;
+		CREATE TRIGGER IF NOT EXISTS blocks_ad AFTER DELETE ON blocks BEGIN
+			INSERT INTO blocks_fts(blocks_fts, rowid, id, title, body_preview)
+			VALUES ('delete', old.rowid, old.id, old.title, old.body_preview);
+		END;
+		CREATE TRIGGER IF NOT EXISTS blocks_au AFTER UPDATE ON blocks BEGIN
+			INSERT INTO blocks_fts(blocks_fts, rowid, id, title, body_preview)
+			VALUES ('delete', old.rowid, old.id, old.title, old.body_preview);
+			INSERT INTO blocks_fts(rowid, id, title, body_preview)
+			VALUES (new.rowid, new.id, new.title, new.body_preview);
+		END;
+		`,
+	},
 }
 
 // UpsertBlock inserts or updates a block and its tags/links in the index.
@@ -230,7 +269,10 @@ func (s *Store) UpsertBlock(b *block.Block) error {
 // DeleteBlock removes a block from the index by ID.
 func (s *Store) DeleteBlock(id string) error {
 	_, err := s.db.Exec("DELETE FROM blocks WHERE id = ?", id)
-	return err
+	if err != nil {
+		return fmt.Errorf("deleting block %s: %w", id, err)
+	}
+	return nil
 }
 
 // GetBlock retrieves a single block by ID.
@@ -469,7 +511,11 @@ func (s *Store) FindRelatedBlocks(target *block.Block, limit int) ([]*block.Bloc
 	words = append(words, target.Tags...)
 
 	// Super naive tokenizer: split by space, keep words > 4 chars
-	text := target.Title + " " + target.Body
+	bodyText := target.Body
+	if bodyText == "" {
+		bodyText = target.BodyPreviewText
+	}
+	text := target.Title + " " + bodyText
 	parts := strings.Fields(text)
 	for _, p := range parts {
 		// remove basic punctuation
@@ -556,7 +602,7 @@ func scanBlock(row *sql.Row) (*block.Block, error) {
 		b.Modified, _ = time.Parse(time.RFC3339, modifiedStr.String)
 	}
 	if bodyPreview.Valid {
-		b.Body = bodyPreview.String
+		b.BodyPreviewText = bodyPreview.String
 	}
 	if area.Valid {
 		b.Area = area.String
@@ -585,7 +631,7 @@ func scanBlockRows(rows *sql.Rows) (*block.Block, error) {
 		b.Modified, _ = time.Parse(time.RFC3339, modifiedStr.String)
 	}
 	if bodyPreview.Valid {
-		b.Body = bodyPreview.String
+		b.BodyPreviewText = bodyPreview.String
 	}
 	if area.Valid {
 		b.Area = area.String

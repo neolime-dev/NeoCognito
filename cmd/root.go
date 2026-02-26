@@ -9,15 +9,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lemondesk/neocognito/internal/block"
-	"github.com/lemondesk/neocognito/internal/config"
-	"github.com/lemondesk/neocognito/internal/export"
-	"github.com/lemondesk/neocognito/internal/store"
-	sy "github.com/lemondesk/neocognito/internal/sync"
-	"github.com/lemondesk/neocognito/internal/template"
-	"github.com/lemondesk/neocognito/internal/tui/capture"
-	"github.com/lemondesk/neocognito/internal/tui/styles"
-	"github.com/lemondesk/neocognito/internal/tui/zen"
+	"github.com/neolime-dev/neocognito/internal/block"
+	"github.com/neolime-dev/neocognito/internal/config"
+	"github.com/neolime-dev/neocognito/internal/export"
+	"github.com/neolime-dev/neocognito/internal/store"
+	sy "github.com/neolime-dev/neocognito/internal/sync"
+	"github.com/neolime-dev/neocognito/internal/template"
+	"github.com/neolime-dev/neocognito/internal/tui/capture"
+	"github.com/neolime-dev/neocognito/internal/tui/styles"
+	"github.com/neolime-dev/neocognito/internal/tui/zen"
 )
 
 // EnsureDataDirs creates the blocks, assets, and versions directories if needed.
@@ -233,11 +233,15 @@ func RunExport(dataDir string, targetDir string) error {
 }
 
 // RunSync executes the remote sync command defined in config.
+// The sync_cmd is read from the user's own config.toml and executed via sh.
+// A warning is printed so the user can verify the command before it runs.
 func RunSync(dataDir string, cfg *config.Config) error {
 	if cfg.SyncCmd == "" {
-		return fmt.Errorf("sync_cmd not configured in config.toml")
+		return fmt.Errorf("sync_cmd not configured in config.toml\nSet it in %s, e.g.:\n  sync_cmd = \"cd %s && git add blocks/ templates/ && git commit -m 'sync' && git push\"",
+			config.ConfigPath(), dataDir)
 	}
-	fmt.Printf("🔄 Running sync: %s\n", cfg.SyncCmd)
+	fmt.Fprintf(os.Stderr, "Sync command: %s\n", cfg.SyncCmd)
+	fmt.Fprintf(os.Stderr, "Working dir:  %s\n\n", dataDir)
 	cmd := exec.Command("sh", "-c", cfg.SyncCmd)
 	cmd.Dir = dataDir
 	cmd.Stdout = os.Stdout
@@ -284,6 +288,38 @@ func RunCapture(dataDir string, cfg *config.Config) error {
 	return RunAdd(dataDir, val, cfg)
 }
 
+// RunRebuild deletes the SQLite index and re-indexes all block files from disk.
+func RunRebuild(dataDir string, cfg *config.Config) error {
+	dbPath := filepath.Join(dataDir, "index.db")
+
+	// Remove existing database files
+	for _, suffix := range []string{"", "-wal", "-shm"} {
+		if err := os.Remove(dbPath + suffix); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("removing %s: %w", dbPath+suffix, err)
+		}
+	}
+	fmt.Println("Removed old index.")
+
+	// Re-create the store (runs migrations to create fresh schema)
+	st, err := store.New(dbPath)
+	if err != nil {
+		return fmt.Errorf("creating new store: %w", err)
+	}
+	defer st.Close()
+
+	blocksDir := filepath.Join(dataDir, "blocks")
+	engine := sy.NewEngine(blocksDir, st, cfg)
+
+	fmt.Printf("Re-indexing blocks from %s...\n", blocksDir)
+	if err := engine.FullScan(); err != nil {
+		return fmt.Errorf("full scan: %w", err)
+	}
+
+	count, _ := st.BlockCount()
+	fmt.Printf("Rebuild complete: %d blocks indexed.\n", count)
+	return nil
+}
+
 // PrintUsage shows CLI usage information.
 func PrintUsage() {
 	fmt.Println(`⚡ NeoCognito — Second Brain TUI
@@ -298,6 +334,7 @@ Usage:
   neocognito export [PATH]         Generate static HTML site
   neocognito sync                  Sync data via configured sync_cmd
   neocognito zen <id|path>         Open distraction-free editor
+  neocognito rebuild               Rebuild the search index from block files
   neocognito config                Show/create the config file
 
 Options:

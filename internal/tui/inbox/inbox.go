@@ -9,8 +9,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
-	"github.com/lemondesk/neocognito/internal/block"
-	"github.com/lemondesk/neocognito/internal/tui/styles"
+	"github.com/neolime-dev/neocognito/internal/block"
+	"github.com/neolime-dev/neocognito/internal/tui/styles"
 )
 
 // BlockCreatedMsg is sent when a new block is successfully captured.
@@ -172,7 +172,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, textinput.Blink
 		case "enter":
 			if b := m.SelectedBlock(); b != nil {
-				if len(strings.TrimSpace(b.Body)) > 0 {
+				if len(strings.TrimSpace(b.BodyPreviewText)) > 0 {
 					m.renderBlock(b)
 					m.viewing = true
 				}
@@ -258,7 +258,7 @@ func (m *Model) renderBlock(b *block.Block) {
 	}
 	content.WriteString("---\n\n")
 
-	body := m.expandTransclusions(b.Body)
+	body := m.expandTransclusions(b.BodyPreviewText)
 	content.WriteString(body)
 
 	wrapWidth := m.Width - 6

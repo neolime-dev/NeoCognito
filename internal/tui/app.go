@@ -10,40 +10,40 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/lemondesk/neocognito/cmd"
-	"github.com/lemondesk/neocognito/internal/block"
-	"github.com/lemondesk/neocognito/internal/config"
-	"github.com/lemondesk/neocognito/internal/export"
-	"github.com/lemondesk/neocognito/internal/info"
-	"github.com/lemondesk/neocognito/internal/recur"
-	"github.com/lemondesk/neocognito/internal/store"
-	sy "github.com/lemondesk/neocognito/internal/sync"
-	systemplate "github.com/lemondesk/neocognito/internal/template"
-	"github.com/lemondesk/neocognito/internal/tui/daily"
-	"github.com/lemondesk/neocognito/internal/tui/graph"
-	"github.com/lemondesk/neocognito/internal/tui/graphvis"
-	"github.com/lemondesk/neocognito/internal/tui/gtd"
-	"github.com/lemondesk/neocognito/internal/tui/heatmap"
-	"github.com/lemondesk/neocognito/internal/tui/history"
-	"github.com/lemondesk/neocognito/internal/tui/home"
-	"github.com/lemondesk/neocognito/internal/tui/inbox"
-	"github.com/lemondesk/neocognito/internal/tui/journal"
-	"github.com/lemondesk/neocognito/internal/tui/kanban"
-	"github.com/lemondesk/neocognito/internal/tui/palette"
-	"github.com/lemondesk/neocognito/internal/tui/pomodoro"
-	"github.com/lemondesk/neocognito/internal/tui/projects"
-	"github.com/lemondesk/neocognito/internal/tui/related"
-	"github.com/lemondesk/neocognito/internal/tui/review"
-	"github.com/lemondesk/neocognito/internal/tui/search"
-	"github.com/lemondesk/neocognito/internal/tui/sidebar"
-	"github.com/lemondesk/neocognito/internal/tui/statusbar"
-	"github.com/lemondesk/neocognito/internal/tui/styles"
-	"github.com/lemondesk/neocognito/internal/tui/tagcloud"
-	tpl "github.com/lemondesk/neocognito/internal/tui/template"
-	"github.com/lemondesk/neocognito/internal/tui/timeline"
-	"github.com/lemondesk/neocognito/internal/tui/waiting"
-	"github.com/lemondesk/neocognito/internal/tui/wiki"
-	"github.com/lemondesk/neocognito/internal/undo"
+	"github.com/neolime-dev/neocognito/cmd"
+	"github.com/neolime-dev/neocognito/internal/block"
+	"github.com/neolime-dev/neocognito/internal/config"
+	"github.com/neolime-dev/neocognito/internal/export"
+	"github.com/neolime-dev/neocognito/internal/info"
+	"github.com/neolime-dev/neocognito/internal/recur"
+	"github.com/neolime-dev/neocognito/internal/store"
+	sy "github.com/neolime-dev/neocognito/internal/sync"
+	systemplate "github.com/neolime-dev/neocognito/internal/template"
+	"github.com/neolime-dev/neocognito/internal/tui/daily"
+	"github.com/neolime-dev/neocognito/internal/tui/graph"
+	"github.com/neolime-dev/neocognito/internal/tui/graphvis"
+	"github.com/neolime-dev/neocognito/internal/tui/gtd"
+	"github.com/neolime-dev/neocognito/internal/tui/heatmap"
+	"github.com/neolime-dev/neocognito/internal/tui/history"
+	"github.com/neolime-dev/neocognito/internal/tui/home"
+	"github.com/neolime-dev/neocognito/internal/tui/inbox"
+	"github.com/neolime-dev/neocognito/internal/tui/journal"
+	"github.com/neolime-dev/neocognito/internal/tui/kanban"
+	"github.com/neolime-dev/neocognito/internal/tui/palette"
+	"github.com/neolime-dev/neocognito/internal/tui/pomodoro"
+	"github.com/neolime-dev/neocognito/internal/tui/projects"
+	"github.com/neolime-dev/neocognito/internal/tui/related"
+	"github.com/neolime-dev/neocognito/internal/tui/review"
+	"github.com/neolime-dev/neocognito/internal/tui/search"
+	"github.com/neolime-dev/neocognito/internal/tui/sidebar"
+	"github.com/neolime-dev/neocognito/internal/tui/statusbar"
+	"github.com/neolime-dev/neocognito/internal/tui/styles"
+	"github.com/neolime-dev/neocognito/internal/tui/tagcloud"
+	tpl "github.com/neolime-dev/neocognito/internal/tui/template"
+	"github.com/neolime-dev/neocognito/internal/tui/timeline"
+	"github.com/neolime-dev/neocognito/internal/tui/waiting"
+	"github.com/neolime-dev/neocognito/internal/tui/wiki"
+	"github.com/neolime-dev/neocognito/internal/undo"
 )
 
 const (
@@ -85,7 +85,7 @@ type App struct {
 	height       int
 
 	cfg       *config.Config
-	store     *store.Store
+	store     store.Storer
 	engine    *sy.Engine
 	undoStack *undo.Stack
 	flashMsg  string // brief status message (e.g. "Undone: status change")
@@ -94,7 +94,7 @@ type App struct {
 }
 
 // NewApp creates and initialises the root application model.
-func NewApp(st *store.Store, engine *sy.Engine, cfg *config.Config) App {
+func NewApp(st store.Storer, engine *sy.Engine, cfg *config.Config) App {
 	if cfg == nil {
 		cfg = config.Default()
 	}
@@ -149,16 +149,20 @@ func NewApp(st *store.Store, engine *sy.Engine, cfg *config.Config) App {
 		}
 
 		// If just completed AND has recurrence — spawn next occurrence
-		if newStatus == block.StatusDone && b.Recur != "" {
+		if newStatus == block.StatusDone && b.Recur != "" && b.Due != nil {
 			if nextDue, err := recur.NextDue(b.Recur, *b.Due); err == nil {
 				next := block.NewBlock(b.Title)
 				next.Status = block.StatusTodo
-				next.Tags = b.Tags
+				next.Tags = append([]string{}, b.Tags...)
 				next.Recur = b.Recur
 				next.DelegatedTo = b.DelegatedTo
 				next.Area = b.Area
 				next.Due = nextDue
-				_, _ = engine.CreateBlock(next.Title)
+				next.FilePath = filepath.Join(engine.BlocksDir(), next.ID+".md")
+				versionsDir := filepath.Join(engine.DataDir(), "versions")
+				if err := block.WriteFileVersioned(next, versionsDir); err == nil {
+					_ = engine.IndexFile(next.FilePath)
+				}
 			}
 		}
 
@@ -956,26 +960,32 @@ func (a *App) selectedBlocks() []*block.Block {
 }
 
 func (a *App) refreshPanelData() {
-	noStatus := ""
-	if blocks, err := a.store.ListBlocks(store.Filter{Status: &noStatus}); err == nil {
-		a.inbox.SetBlocks(blocks)
+	blocks, err := a.store.ListBlocks(store.Filter{})
+	if err != nil {
+		return
 	}
-	if blocks, err := a.store.ListBlocks(store.Filter{HasStatus: true}); err == nil {
-		a.timeline.SetBlocks(blocks)
-		a.kanban.SetBlocks(blocks)
+	// Partition in-memory — avoids 2 extra DB round-trips per refresh.
+	var inboxBlocks, taskBlocks []*block.Block
+	for _, b := range blocks {
+		if b.Status == "" {
+			inboxBlocks = append(inboxBlocks, b)
+		} else {
+			taskBlocks = append(taskBlocks, b)
+		}
 	}
-	if blocks, err := a.store.ListBlocks(store.Filter{}); err == nil {
-		a.home.SetBlocks(blocks)
-		a.wiki.SetBlocks(blocks)
-		a.projects.SetBlocks(blocks)
-		a.search.SetItems(blocks)
-		a.waiting.SetBlocks(blocks)
-		a.journal.SetBlocks(blocks)
-		a.heatmap.SetBlocks(blocks)
-		a.review.SetBlocks(blocks)
-		a.graphVis.LoadData()
-		a.tagCloud.LoadData()
-	}
+	a.inbox.SetBlocks(inboxBlocks)
+	a.timeline.SetBlocks(taskBlocks)
+	a.kanban.SetBlocks(taskBlocks)
+	a.home.SetBlocks(blocks)
+	a.wiki.SetBlocks(blocks)
+	a.projects.SetBlocks(blocks)
+	a.search.SetItems(blocks)
+	a.waiting.SetBlocks(blocks)
+	a.journal.SetBlocks(blocks)
+	a.heatmap.SetBlocks(blocks)
+	a.review.SetBlocks(blocks)
+	a.graphVis.LoadData()
+	a.tagCloud.LoadData()
 }
 
 func (a *App) updateStatusBindings() {

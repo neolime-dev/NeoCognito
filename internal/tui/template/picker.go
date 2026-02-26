@@ -7,8 +7,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/lemondesk/neocognito/internal/template"
-	"github.com/lemondesk/neocognito/internal/tui/styles"
+	"github.com/neolime-dev/neocognito/internal/template"
+	"github.com/neolime-dev/neocognito/internal/tui/styles"
 	"github.com/sahilm/fuzzy"
 )
 

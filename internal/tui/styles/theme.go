@@ -84,6 +84,54 @@ var (
 	TextDim   lipgloss.TerminalColor
 )
 
+// activeTheme tracks the ThemeColors loaded by the most recent LoadTheme call.
+var activeTheme ThemeColors
+
+// CurrentTheme returns the ThemeColors that were loaded by the most recent
+// LoadTheme call. Useful for non-TUI consumers such as the HTML exporter.
+func CurrentTheme() ThemeColors { return activeTheme }
+
+// CSSTheme converts all nine ThemeColors fields to CSS hex strings.
+// This is the correct way to embed theme colors into HTML/CSS output;
+// direct fmt.Sprint of lipgloss.AdaptiveColor produces a struct repr, not hex.
+type CSSTheme struct {
+	Primary, Secondary, Accent, Success, Warning, Muted, Surface, Text, TextDim string
+}
+
+func (t ThemeColors) CSSTheme() CSSTheme {
+	return CSSTheme{
+		Primary:   ColorHex(t.Primary),
+		Secondary: ColorHex(t.Secondary),
+		Accent:    ColorHex(t.Accent),
+		Success:   ColorHex(t.Success),
+		Warning:   ColorHex(t.Warning),
+		Muted:     ColorHex(t.Muted),
+		Surface:   ColorHex(t.Surface),
+		Text:      ColorHex(t.Text),
+		TextDim:   ColorHex(t.TextDim),
+	}
+}
+
+// ColorHex extracts a hex color string from any lipgloss.TerminalColor value.
+// For AdaptiveColor the Dark variant is returned (canonical for dark terminals).
+func ColorHex(c lipgloss.TerminalColor) string {
+	if c == nil {
+		return "#888888"
+	}
+	switch v := c.(type) {
+	case lipgloss.Color:
+		return string(v)
+	case lipgloss.AdaptiveColor:
+		return v.Dark
+	case lipgloss.CompleteColor:
+		return v.TrueColor
+	case lipgloss.CompleteAdaptiveColor:
+		return v.Dark.TrueColor
+	default:
+		return "#888888"
+	}
+}
+
 var (
 	ActiveBorder      lipgloss.Style
 	InactiveBorder    lipgloss.Style
@@ -122,6 +170,8 @@ func LoadTheme(name string) {
 	case "tokyo-night", "default", "":
 		colors = TokyoNight
 	}
+
+	activeTheme = colors
 
 	Primary = colors.Primary
 	Secondary = colors.Secondary

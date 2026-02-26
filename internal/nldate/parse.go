@@ -103,20 +103,21 @@ func ExtractDate(text string, now time.Time) (string, *time.Time, bool) {
 		return clean, &t, true
 	}
 
-	// Try last two words (e.g. "next friday", "in 3")
-	if len(words) >= 2 {
-		twoLast := words[len(words)-2] + " " + words[len(words)-1]
-		if t, ok := Parse(twoLast, now); ok {
-			clean := strings.Join(words[:len(words)-2], " ")
-			return clean, &t, true
-		}
-	}
-
-	// Try last three words ("in 3 days", "in 2 weeks")
+	// Try last three words first ("in 3 days", "in 2 weeks") — must precede the
+	// two-word probe so "in 3 days" is not greedily consumed as bare "3 days".
 	if len(words) >= 3 {
 		threeLast := words[len(words)-3] + " " + words[len(words)-2] + " " + words[len(words)-1]
 		if t, ok := Parse(threeLast, now); ok {
 			clean := strings.Join(words[:len(words)-3], " ")
+			return clean, &t, true
+		}
+	}
+
+	// Try last two words (e.g. "next friday", "3 days")
+	if len(words) >= 2 {
+		twoLast := words[len(words)-2] + " " + words[len(words)-1]
+		if t, ok := Parse(twoLast, now); ok {
+			clean := strings.Join(words[:len(words)-2], " ")
 			return clean, &t, true
 		}
 	}

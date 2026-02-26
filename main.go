@@ -2,25 +2,25 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/lemondesk/neocognito/cmd"
-	"github.com/lemondesk/neocognito/internal/config"
-	"github.com/lemondesk/neocognito/internal/store"
-	sy "github.com/lemondesk/neocognito/internal/sync"
-	"github.com/lemondesk/neocognito/internal/tui"
-	"github.com/lemondesk/neocognito/internal/tui/styles"
+	"github.com/neolime-dev/neocognito/cmd"
+	"github.com/neolime-dev/neocognito/internal/config"
+	"github.com/neolime-dev/neocognito/internal/store"
+	sy "github.com/neolime-dev/neocognito/internal/sync"
+	"github.com/neolime-dev/neocognito/internal/tui"
+	"github.com/neolime-dev/neocognito/internal/tui/styles"
 )
 
 func main() {
 	// Load config (falls back to defaults if no file)
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("Error loading config: %v", err)
+		fmt.Fprintf(os.Stderr, "fatal: loading config: %v\n", err)
+		os.Exit(1)
 	}
 
 	styles.LoadTheme(cfg.Theme)
@@ -128,6 +128,12 @@ func main() {
 			os.Exit(1)
 		}
 
+	case "rebuild":
+		if err := cmd.RunRebuild(dataDir, cfg); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
 	case "config":
 		// Print config path and write default if missing
 		if err := config.WriteDefault(); err != nil {
@@ -153,13 +159,15 @@ func runTUI(cfg *config.Config) {
 	dataDir := cfg.DataDir
 
 	if err := cmd.EnsureDataDirs(dataDir); err != nil {
-		log.Fatalf("Error creating data directories: %v", err)
+		fmt.Fprintf(os.Stderr, "fatal: creating data directories: %v\n", err)
+		os.Exit(1)
 	}
 
 	dbPath := filepath.Join(dataDir, "index.db")
 	st, err := store.New(dbPath)
 	if err != nil {
-		log.Fatalf("Error opening database: %v", err)
+		fmt.Fprintf(os.Stderr, "fatal: opening database: %v\n", err)
+		os.Exit(1)
 	}
 	defer st.Close()
 
@@ -167,11 +175,11 @@ func runTUI(cfg *config.Config) {
 	engine := sy.NewEngine(blocksDir, st, cfg)
 
 	if err := engine.FullScan(); err != nil {
-		log.Printf("Warning: initial scan failed: %v", err)
+		fmt.Fprintf(os.Stderr, "warning: initial scan failed: %v\n", err)
 	}
 
 	if err := engine.Watch(); err != nil {
-		log.Printf("Warning: file watcher failed: %v", err)
+		fmt.Fprintf(os.Stderr, "warning: file watcher failed: %v\n", err)
 	}
 	defer engine.Stop()
 
@@ -182,6 +190,7 @@ func runTUI(cfg *config.Config) {
 	)
 
 	if _, err := p.Run(); err != nil {
-		log.Fatalf("Error running TUI: %v", err)
+		fmt.Fprintf(os.Stderr, "fatal: running TUI: %v\n", err)
+		os.Exit(1)
 	}
 }
