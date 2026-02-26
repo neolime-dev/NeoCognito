@@ -40,7 +40,7 @@ The recommended way to install NeoCognito is by building from source using the p
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/lemondesk/NeoCognito.git
+    git clone https://github.com/neolime-dev/NeoCognito.git
     cd NeoCognito
     ```
 
