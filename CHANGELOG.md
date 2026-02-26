@@ -7,19 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-02-26
+
 ### Added
 - Structured logging with `log/slog` throughout the sync engine (replaces `log.Printf`).
 - `SetLogger` method on `sync.Engine` for test-time log suppression.
 - `styles.ColorHex` / `ThemeColors.CSSTheme()` / `styles.CurrentTheme()` — clean API for converting Lipgloss theme colors to CSS hex strings.
 - `store.New` GoDoc comment.
 - GitHub Actions CI workflow (build + vet + race-detector tests on every push/PR).
-- `Makefile` `test` and `lint` targets.
+- GoReleaser release pipeline — publishes binaries for linux/darwin × amd64/arm64 on `v*` tags.
+- `Makefile` `test`, `lint`, `tag`, and `release` targets.
 - Store integration test suite (14 tests).
 - Config package test suite (12 tests).
 - Recur package test suite (13 tests).
 - Sync engine test suite (9 tests, in-memory stub store).
 - Export package test suite (6 tests).
 - `CONTRIBUTING.pt-BR.md` — Portuguese translation of the contribution guide.
+- `CHANGELOG.md` — this file.
 
 ### Changed
 - Module path corrected to `github.com/neolime-dev/neocognito`.
@@ -27,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `export.Run` now propagates template-parse and template-execute errors instead of silencing them.
 - `store.DeleteBlock` wraps the underlying error for better diagnostics.
 - SQLite connection pool tuned: `SetMaxOpenConns(4)`, `SetMaxIdleConns(4)`, `SetConnMaxLifetime(0)` (was `SetMaxOpenConns(1)`).
-- `nldate.ExtractDate` probe order fixed — three-word phrases are tried before two-word phrases, preventing greedy mis-match (e.g. "Buy milk in 3 days" no longer strips "3 days" as a two-word phrase before seeing "in 3 days").
+- `nldate.ExtractDate` probe order fixed — three-word phrases are tried before two-word phrases, preventing greedy mis-match (e.g. "Buy milk in 3 days" no longer consumed as "3 days").
 - `CONTRIBUTING.md` translated to English; Portuguese original preserved as `CONTRIBUTING.pt-BR.md`.
 
 ### Fixed
@@ -48,5 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Themes: Tokyo Night, Catppuccin, Nord, Gruvbox, Omarchy/system.
 - `config.toml` with XDG Base Directory support.
 
-[Unreleased]: https://github.com/neolime-dev/neocognito/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/neolime-dev/neocognito/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/neolime-dev/neocognito/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/neolime-dev/neocognito/releases/tag/v1.0.0
