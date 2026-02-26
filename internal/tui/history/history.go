@@ -28,12 +28,13 @@ type Version struct {
 
 // Model is the history panel state.
 type Model struct {
-	Visible  bool
-	block    *block.Block
-	versions []Version
-	cursor   int
-	Width    int
-	Height   int
+	Visible    bool
+	block      *block.Block
+	versions   []Version
+	cursor     int
+	confirming bool
+	Width      int
+	Height     int
 }
 
 // New creates a new history model.
@@ -58,6 +59,23 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if m.confirming {
+			switch msg.String() {
+			case "y", "Y":
+				if len(m.versions) > 0 && m.cursor < len(m.versions) {
+					b, err := restoreVersion(m.block, m.versions[m.cursor])
+					if err == nil {
+						m.Visible = false
+						m.confirming = false
+						return m, func() tea.Msg { return RestoredMsg{Block: b} }
+					}
+				}
+				m.confirming = false
+			case "n", "N", "esc":
+				m.confirming = false
+			}
+			return m, nil
+		}
 		switch msg.String() {
 		case "esc", "q":
 			m.Visible = false
@@ -72,11 +90,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 		case "enter":
 			if len(m.versions) > 0 && m.cursor < len(m.versions) {
-				b, err := restoreVersion(m.block, m.versions[m.cursor])
-				if err == nil {
-					m.Visible = false
-					return m, func() tea.Msg { return RestoredMsg{Block: b} }
-				}
+				m.confirming = true
 			}
 		}
 	}
@@ -90,7 +104,7 @@ func (m Model) View() string {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(styles.TitleStyle.Render("📜 Version History") + "\n")
+	sb.WriteString(styles.TitleStyle.Render("󰋚 Version History") + "\n")
 	if m.block != nil {
 		sb.WriteString(styles.DimItemStyle.Render("  Block: "+m.block.Title) + "\n\n")
 	}
@@ -114,7 +128,11 @@ func (m Model) View() string {
 		sb.WriteString(cursor + style.Render(label) + "\n")
 	}
 
-	sb.WriteString("\n" + styles.DimItemStyle.Render("  [Enter] restore  [Esc] close"))
+	if m.confirming {
+		sb.WriteString("\n" + styles.AccentStyle.Render("  Restore this version? [y] yes  [n] cancel"))
+	} else {
+		sb.WriteString("\n" + styles.DimItemStyle.Render("  [Enter] restore  [Esc] close"))
+	}
 
 	return styles.ActiveBorder.Width(m.Width).Height(m.Height).Render(sb.String())
 }

@@ -155,15 +155,17 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 // View renders the journal panel.
 func (m Model) View() string {
 	header := styles.TitleStyle.Render("󰏫 Journal")
+	subtitle := styles.DimItemStyle.Render("  All blocks, newest first")
 
 	if len(m.days) == 0 {
 		empty := styles.DimItemStyle.Render("  No entries yet.")
-		content := lipgloss.JoinVertical(lipgloss.Left, header+"\n", "\n"+empty)
+		content := lipgloss.JoinVertical(lipgloss.Left, header+"\n", subtitle+"\n", "\n"+empty)
 		return m.border().Render(content)
 	}
 
 	var sb strings.Builder
 	sb.WriteString(header + "\n")
+	sb.WriteString(subtitle + "\n")
 
 	linesWritten := lipgloss.Height(header) + 1
 	avail := m.Height - 4

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/neolime-dev/neocognito/internal/block"
 	"github.com/neolime-dev/neocognito/internal/tui/styles"
 )
@@ -147,17 +148,10 @@ func (m *Model) SetSize(w, h int) { m.Width = w; m.Height = h }
 func urgencyBadge(days int) string {
 	switch {
 	case days >= 7:
-		return "🔴"
+		return styles.AccentStyle.Render("●")
 	case days >= 3:
-		return "🟡"
+		return lipgloss.NewStyle().Foreground(styles.Warning).Render("●")
 	default:
-		return "🟢"
+		return styles.SuccessStyle.Render("●")
 	}
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

@@ -97,7 +97,7 @@ func (m Model) View() string {
 	var sb strings.Builder
 
 	// Header
-	sb.WriteString(styles.TitleStyle.Render("🧠 Related Blocks"))
+	sb.WriteString(styles.TitleStyle.Render("󰈎 Related Blocks"))
 	if m.Target != nil {
 		sb.WriteString(styles.DimItemStyle.Render(" for " + m.Target.Title))
 	}

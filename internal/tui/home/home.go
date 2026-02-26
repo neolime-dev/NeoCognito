@@ -177,10 +177,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if m.cursor > 0 {
 				m.cursor--
 			}
-		case "tab", "right", "l":
+		case "right", "l":
 			m.focusSection = (m.focusSection + 1) % 3
 			m.clampCursor()
-		case "shift+tab", "left", "h":
+		case "left", "h":
 			m.focusSection--
 			if m.focusSection < 0 {
 				m.focusSection = 2

@@ -24,6 +24,7 @@ import (
 	"github.com/neolime-dev/neocognito/internal/tui/graphvis"
 	"github.com/neolime-dev/neocognito/internal/tui/gtd"
 	"github.com/neolime-dev/neocognito/internal/tui/heatmap"
+	"github.com/neolime-dev/neocognito/internal/tui/help"
 	"github.com/neolime-dev/neocognito/internal/tui/history"
 	"github.com/neolime-dev/neocognito/internal/tui/home"
 	"github.com/neolime-dev/neocognito/internal/tui/inbox"
@@ -76,6 +77,7 @@ type App struct {
 	related   related.Model
 	projects  projects.Model
 	tagCloud  tagcloud.Model
+	help      help.Model
 
 	activeView   string
 	previousView string
@@ -124,6 +126,7 @@ func NewApp(st store.Storer, engine *sy.Engine, cfg *config.Config) App {
 		palette:    palette.New(),
 		related:    related.New(),
 		projects:   projects.New(),
+		help:       help.New(),
 		activeView: sidebar.ViewHome,
 		focus:      focusSidebar,
 		mode:       "NORMAL",
@@ -370,6 +373,13 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return a, nil
 			}
+		case "?":
+			if a.help.Visible {
+				a.help.Visible = false
+			} else {
+				a.help.Open(a.activeView)
+			}
+			return a, nil
 		}
 
 		if a.confirmDelete != nil {
@@ -408,6 +418,11 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		// Delegate to overlays first
+		if a.help.Visible {
+			var cmd tea.Cmd
+			a.help, cmd = a.help.Update(msg)
+			return a, cmd
+		}
 		if a.gtd.Visible {
 			var cmd tea.Cmd
 			a.gtd, cmd = a.gtd.Update(msg)
@@ -772,6 +787,9 @@ func (a App) View() string {
 			BorderForeground(styles.Accent).
 			Render(prompt)
 		content = lipgloss.Place(a.width, a.height-3, lipgloss.Center, lipgloss.Center, box)
+	} else if a.help.Visible {
+		overlay := a.help.View()
+		content = lipgloss.Place(a.width, a.height-3, lipgloss.Center, lipgloss.Center, overlay)
 	} else if a.gtd.Visible {
 		overlay := a.gtd.View()
 		content = lipgloss.Place(a.width, a.height-3, lipgloss.Center, lipgloss.Center, overlay)
@@ -833,6 +851,7 @@ func (a *App) updateLayout() {
 	a.heatmap.SetSize(mainWidth, mainHeight)
 	a.review.SetSize(mainWidth, mainHeight)
 	a.related.SetSize(overlayW, overlayH)
+	a.help.SetSize(overlayW, overlayH)
 	a.graphVis.SetSize(mainWidth, mainHeight)
 	a.tagCloud.SetSize(mainWidth, mainHeight)
 }
@@ -1004,7 +1023,7 @@ func (a *App) updateStatusBindings() {
 		case sidebar.ViewHome:
 			bindings = append(bindings,
 				statusbar.Binding{Key: "Enter", Desc: "view"},
-				statusbar.Binding{Key: "Tab", Desc: "section"},
+				statusbar.Binding{Key: "→/l", Desc: "section"},
 			)
 		case sidebar.ViewInbox:
 			bindings = append(bindings,

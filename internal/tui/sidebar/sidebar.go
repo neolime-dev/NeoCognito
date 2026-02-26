@@ -141,29 +141,32 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[m.cursor].id} }
 			}
 		case "1":
-			m.cursor = 1
-			return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[1].id} }
+			return m.jumpToView(ViewHome)
 		case "2":
-			m.cursor = 2
-			return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[2].id} }
+			return m.jumpToView(ViewInbox)
 		case "3":
-			m.cursor = 3
-			return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[3].id} }
+			return m.jumpToView(ViewTasks)
 		case "4":
-			m.cursor = 4
-			return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[4].id} }
+			return m.jumpToView(ViewKanban)
 		case "5":
-			m.cursor = 5
-			return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[5].id} }
+			return m.jumpToView(ViewWaiting)
 		case "6":
-			m.cursor = 7
-			return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[7].id} }
+			return m.jumpToView(ViewWiki)
 		case "7":
-			m.cursor = 8
-			return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[8].id} }
+			return m.jumpToView(ViewProjects)
 		case "8":
-			m.cursor = 10
-			return m, func() tea.Msg { return ViewChangedMsg{ViewID: items[10].id} }
+			return m.jumpToView(ViewGraphVis)
+		}
+	}
+	return m, nil
+}
+
+// jumpToView finds the item with the given ID, sets the cursor, and emits a ViewChangedMsg.
+func (m Model) jumpToView(id string) (Model, tea.Cmd) {
+	for i, it := range items {
+		if it.id == id {
+			m.cursor = i
+			return m, func() tea.Msg { return ViewChangedMsg{ViewID: id} }
 		}
 	}
 	return m, nil
