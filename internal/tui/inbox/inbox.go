@@ -57,8 +57,6 @@ func New() Model {
 	ti.PromptStyle = styles.SearchPromptStyle
 	ti.TextStyle = styles.NormalItemStyle
 
-	ti.TextStyle = styles.NormalItemStyle
-
 	vp := viewport.New(0, 0)
 
 	return Model{

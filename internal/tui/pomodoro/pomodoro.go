@@ -130,7 +130,7 @@ func (m Model) StatusBarSegment() string {
 	secs := int(m.remaining.Seconds()) % 60
 	label := fmt.Sprintf("%s %02d:%02d", icon, mins, secs)
 	if !m.active {
-		label += " ⏸"
+		label += " 󰏤"
 	}
 	return label
 }
@@ -157,7 +157,7 @@ func (m Model) View() string {
 	sb.WriteString(fmt.Sprintf("  %s  %s\n", phaseLabel(m.phase), m.StatusBarSegment()))
 	if m.target != nil {
 		sb.WriteString(fmt.Sprintf("  Focus: %s\n", m.target.Title))
-		sb.WriteString(fmt.Sprintf("  Sessions: %d  🍅×%d  ⏳ %dm\n", m.sessions, m.target.Pomodoros, m.target.TimeSpent))
+		sb.WriteString(fmt.Sprintf("  Sessions: %d  󰔠×%d  󰔛 %dm\n", m.sessions, m.target.Pomodoros, m.target.TimeSpent))
 	}
 	sb.WriteString("\n  [p] pause  [.] reset")
 	return sb.String()
@@ -173,11 +173,11 @@ func tickCmd() tea.Cmd {
 func phaseIcon(p Phase) string {
 	switch p {
 	case PhaseWork:
-		return "🍅"
+		return "󰔠"
 	case PhaseShortBreak:
-		return "☕"
+		return "󱌏"
 	case PhaseLongBreak:
-		return "🌿"
+		return "󰌯"
 	}
 	return ""
 }

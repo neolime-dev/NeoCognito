@@ -29,7 +29,6 @@ type Model struct {
 	inboxCount int
 	completed  int
 	pomodoros  int
-	totalPomos int
 
 	cursor       int
 	focusSection int // 0 = today, 1 = upcoming, 2 = recent
@@ -65,8 +64,6 @@ func (m *Model) SetBlocks(blocks []*block.Block) {
 	m.monthDates = make(map[int]bool)
 	m.inboxCount = 0
 	m.completed = 0
-	m.pomodoros = 0
-	m.totalPomos = 5 // Arbitrary daily target for now
 
 	now := time.Now()
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
@@ -81,7 +78,6 @@ func (m *Model) SetBlocks(blocks []*block.Block) {
 
 		// Today's Stats
 		if b.Modified.After(todayStart) && b.Modified.Before(todayEnd) {
-			m.pomodoros += b.Pomodoros
 			if b.Status == block.StatusDone {
 				m.completed++
 			}
@@ -127,6 +123,11 @@ func (m *Model) SetBlocks(blocks []*block.Block) {
 	}
 
 	m.clampCursor()
+}
+
+// SetTodayPomodoros sets the number of pomodoro sessions completed in the current app session.
+func (m *Model) SetTodayPomodoros(n int) {
+	m.pomodoros = n
 }
 
 func (m *Model) clampCursor() {
@@ -307,7 +308,7 @@ func (m Model) View() string {
 	now := time.Now()
 	dateStr := now.Format("Monday, 02 January 2006")
 	welcome := styles.TitleStyle.Render("󰋜 Welcome back!")
-	dateFormatted := styles.NormalModeStyle.Render(fmt.Sprintf(" Today is %s", dateStr))
+	dateFormatted := styles.PrimaryStyle.Render(fmt.Sprintf(" Today is %s", dateStr))
 	header := lipgloss.JoinHorizontal(lipgloss.Center, welcome, dateFormatted)
 
 	innerW := m.Width - 2
@@ -353,9 +354,9 @@ func (m Model) View() string {
 	col1H3 := availWidgetsH - col1H1 - col1H2
 
 	// 2. Col 1: Today + Upcoming + Recent
-	todayWidget := m.renderTaskList("🎯 Daily Focus", m.today, 0, col1W, col1H1)
-	upcomingWidget := m.renderTaskList("📅 Upcoming", m.upcoming, 1, col1W, col1H2)
-	recentWidget := m.renderTaskList("📝 Recent Notes", m.recent, 2, col1W, col1H3)
+	todayWidget := m.renderTaskList("󰓾 Daily Focus", m.today, 0, col1W, col1H1)
+	upcomingWidget := m.renderTaskList("󰃭 Upcoming", m.upcoming, 1, col1W, col1H2)
+	recentWidget := m.renderTaskList("󰏫 Recent Notes", m.recent, 2, col1W, col1H3)
 	leftCol := lipgloss.JoinVertical(lipgloss.Left, todayWidget, upcomingWidget, recentWidget)
 
 	// 3. Col 2: Calendar + Summary + Shortcuts
@@ -411,7 +412,16 @@ func (m Model) renderTaskList(title string, items []*block.Block, sectionID, w, 
 	sb.WriteString("  " + headerStyle.Render(title) + "\n")
 
 	if len(items) == 0 {
-		sb.WriteString("  " + styles.DimItemStyle.Render("Nothing scheduled."))
+		emptyMsg := "Nothing scheduled."
+		switch sectionID {
+		case 0:
+			emptyMsg = "No tasks due today."
+		case 1:
+			emptyMsg = "None in the next 7 days."
+		case 2:
+			emptyMsg = "No recent notes."
+		}
+		sb.WriteString("  " + styles.DimItemStyle.Render(emptyMsg))
 	} else {
 		for i, b := range items {
 			if i >= h-3 {
@@ -430,7 +440,7 @@ func (m Model) renderTaskList(title string, items []*block.Block, sectionID, w, 
 			// Optional due date tag for upcoming
 			tag := ""
 			if sectionID == 1 && b.Due != nil {
-				tag = fmt.Sprintf(" (%s)", b.Due.Format("Mon"))
+				tag = fmt.Sprintf(" (%s)", b.Due.Format("02 Jan"))
 				tag = styles.DimItemStyle.Render(tag)
 			}
 
@@ -459,12 +469,12 @@ func (m Model) renderTaskList(title string, items []*block.Block, sectionID, w, 
 
 func (m Model) renderStats(w int) string {
 	var sb strings.Builder
-	sb.WriteString("  " + styles.TitleStyle.Render("󰋜 Stats") + "\n")
+	sb.WriteString("  " + styles.TitleStyle.Render("󰄶 Stats") + "\n")
 
 	// Inbox
-	inbColor := styles.NormalModeStyle
+	inbColor := styles.SelectedItemStyle
 	if m.inboxCount > 5 {
-		inbColor = lipgloss.NewStyle().Foreground(lipgloss.Color("9")) // Redish if piled up
+		inbColor = styles.AccentStyle.Bold(true)
 	}
 	sb.WriteString(fmt.Sprintf("  Inbox items : %s\n", inbColor.Render(fmt.Sprintf("%d", m.inboxCount))))
 
@@ -491,7 +501,7 @@ func (m Model) renderStats(w int) string {
 
 func (m Model) renderShortcuts(w int) string {
 	var sb strings.Builder
-	sb.WriteString("  " + styles.TitleStyle.Render("󰋜 Quick Actions") + "\n")
+	sb.WriteString("  " + styles.TitleStyle.Render("󰌌 Quick Actions") + "\n")
 
 	shortcuts := []struct{ key, desc string }{
 		{"[a]", "Capture to Inbox"},
@@ -502,7 +512,7 @@ func (m Model) renderShortcuts(w int) string {
 	}
 
 	for _, s := range shortcuts {
-		sb.WriteString(fmt.Sprintf("  %-10s %s\n", styles.PrimaryStyle.Render(s.key), styles.DimItemStyle.Render(s.desc)))
+		sb.WriteString(fmt.Sprintf("  %s %s\n", styles.PrimaryStyle.Render(fmt.Sprintf("%-10s", s.key)), styles.DimItemStyle.Render(s.desc)))
 	}
 
 	return lipgloss.NewStyle().

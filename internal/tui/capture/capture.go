@@ -65,7 +65,7 @@ func (m Model) View() string {
 		return errStyle.Render(fmt.Sprintf("Error: %v", m.err))
 	}
 
-	header := styles.TitleStyle.Render("⚡ Quick Capture")
+	header := styles.TitleStyle.Render("󱐋 Quick Capture")
 	input := m.textInput.View()
 	help := styles.DimItemStyle.Render(" [enter] save  [esc] cancel")
 

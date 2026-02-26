@@ -123,7 +123,7 @@ func (m Model) View() string {
 	b := m.blocks[m.cursor]
 
 	var sb strings.Builder
-	header := styles.TitleStyle.Render("⚡ Inbox Zero Wizard")
+	header := styles.TitleStyle.Render("󱐋 Inbox Zero Wizard")
 	progress := styles.DimItemStyle.Render(fmt.Sprintf(" [%d/%d]", m.cursor+1, len(m.blocks)))
 	sb.WriteString(header + progress + "\n\n")
 
@@ -135,7 +135,7 @@ func (m Model) View() string {
 	sb.WriteString("\n")
 
 	// Question
-	sb.WriteString(styles.NormalModeStyle.Bold(true).Render("  Is this actionable?") + "\n\n")
+	sb.WriteString(styles.AccentStyle.Bold(true).Render("  Is this actionable?") + "\n\n")
 
 	// Options
 	options := []struct{ key, desc string }{
@@ -147,8 +147,8 @@ func (m Model) View() string {
 	}
 
 	for _, opt := range options {
-		sb.WriteString(fmt.Sprintf("  %-10s %s\n",
-			styles.PrimaryStyle.Render(opt.key),
+		sb.WriteString(fmt.Sprintf("  %s %s\n",
+			styles.PrimaryStyle.Render(fmt.Sprintf("%-10s", opt.key)),
 			styles.NormalItemStyle.Render(opt.desc)))
 	}
 

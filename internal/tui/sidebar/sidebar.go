@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/neolime-dev/neocognito/internal/tui/styles"
 )
 
@@ -218,10 +217,3 @@ func (m *Model) SetSize(width, height int) {
 	m.Height = height
 }
 
-// borderColor returns the appropriate border color based on focus.
-func borderColor(active bool) lipgloss.TerminalColor {
-	if active {
-		return styles.Primary
-	}
-	return styles.Muted
-}

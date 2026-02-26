@@ -84,6 +84,8 @@ type App struct {
 	width        int
 	height       int
 
+	todayPomodoros int // pomodoro sessions completed in this app session
+
 	cfg       *config.Config
 	store     store.Storer
 	engine    *sy.Engine
@@ -304,6 +306,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Block != nil {
 			_ = a.engine.UpdateBlock(msg.Block)
 		}
+		a.todayPomodoros++
 		a.refreshPanelData()
 		return a, nil
 
@@ -386,9 +389,9 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}))
 				} else {
 					if count == 1 {
-						a.flashMsg = "🗑 Deleted: " + a.confirmDelete[0].Title
+						a.flashMsg = "󰆴 Deleted: " + a.confirmDelete[0].Title
 					} else {
-						a.flashMsg = fmt.Sprintf("🗑 Deleted %d blocks", count)
+						a.flashMsg = fmt.Sprintf("󰆴 Deleted %d blocks", count)
 					}
 					cmds = append(cmds, tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
 						return clearFlashMsg{}
@@ -742,7 +745,7 @@ func (a App) View() string {
 		return "Loading..."
 	}
 
-	title := styles.TitleStyle.Render("⚡ NeoCognito")
+	title := styles.TitleStyle.Render("󱐋 NeoCognito")
 	// Show flash message if present
 	if a.flashMsg != "" {
 		title += "  " + styles.DimItemStyle.Render(a.flashMsg)
@@ -977,6 +980,7 @@ func (a *App) refreshPanelData() {
 	a.timeline.SetBlocks(taskBlocks)
 	a.kanban.SetBlocks(taskBlocks)
 	a.home.SetBlocks(blocks)
+	a.home.SetTodayPomodoros(a.todayPomodoros)
 	a.wiki.SetBlocks(blocks)
 	a.projects.SetBlocks(blocks)
 	a.search.SetItems(blocks)
@@ -1054,7 +1058,6 @@ func (a *App) openDailyNote() tea.Cmd {
 	if err != nil {
 		return nil
 	}
-	_ = a.engine.IndexFile(b.FilePath)
 	a.daily.SetBlock(b)
 	a.daily.Visible = true
 	return nil

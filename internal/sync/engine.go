@@ -324,13 +324,15 @@ func (e *Engine) maybeGitCommit(message string) {
 	if e.cfg == nil || !e.cfg.GitCommit {
 		return
 	}
-	if err := gitpkg.Init(e.dataDir); err != nil {
-		e.logger.Warn("git op failed", "op", "init", "err", err)
-		return
-	}
-	if err := gitpkg.Commit(e.dataDir, message); err != nil {
-		e.logger.Warn("git op failed", "op", "commit", "err", err)
-	}
+	go func() {
+		if err := gitpkg.Init(e.dataDir); err != nil {
+			e.logger.Warn("git op failed", "op", "init", "err", err)
+			return
+		}
+		if err := gitpkg.Commit(e.dataDir, message); err != nil {
+			e.logger.Warn("git op failed", "op", "commit", "err", err)
+		}
+	}()
 }
 
 func sanitizeFilename(name string) string {

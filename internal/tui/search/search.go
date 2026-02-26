@@ -41,7 +41,7 @@ func New() Model {
 	ti := textinput.New()
 	ti.Placeholder = "Search blocks..."
 	ti.CharLimit = 128
-	ti.Prompt = "  🔍 "
+	ti.Prompt = "  󰍉 "
 	ti.PromptStyle = styles.SearchPromptStyle
 	ti.TextStyle = styles.NormalItemStyle
 

@@ -245,9 +245,9 @@ func (m Model) View() string {
 		colW = 4
 	}
 
-	todoStr := m.renderColumn("📋 Todo", m.todo, colTodo, colW, availH)
-	doingStr := m.renderColumn("⚡ Doing", m.doing, colDoing, colW, availH)
-	doneStr := m.renderColumn("✅ Done", m.done, colDone, colW, availH)
+	todoStr := m.renderColumn("󰄱 Todo", m.todo, colTodo, colW, availH)
+	doingStr := m.renderColumn("󱐋 Doing", m.doing, colDoing, colW, availH)
+	doneStr := m.renderColumn("󰄲 Done", m.done, colDone, colW, availH)
 
 	gap := lipgloss.NewStyle().Width(1).Render("")
 	board := lipgloss.JoinHorizontal(lipgloss.Top, todoStr, gap, doingStr, gap, doneStr)
@@ -270,7 +270,7 @@ func (m Model) renderColumn(title string, blocks []*block.Block, colIdx, width, 
 
 	// Cards
 	if len(blocks) == 0 {
-		sb.WriteString("  " + styles.DimItemStyle.Render("Empty"))
+		sb.WriteString("  " + styles.DimItemStyle.Render("No tasks yet"))
 	}
 
 	for i, b := range blocks {

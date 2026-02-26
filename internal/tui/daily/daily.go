@@ -109,7 +109,7 @@ func (m Model) View() string {
 	}
 
 	var sb strings.Builder
-	title := "📅 Daily Note"
+	title := "󰃭 Daily Note"
 	if m.block != nil {
 		title += " — " + time.Now().Format("02 Jan 2006")
 	}
