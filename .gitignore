@@ -36,3 +36,5 @@ tt_test.go
 # SQLite artifacts
 *.db-wal
 *.db-shm
+
+Specialist_Review.md
