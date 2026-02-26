@@ -8,6 +8,7 @@ neocognito-dev
 *.dylib
 *.test
 CLAUDE.md
+lastsession.txt
 
 # Log files
 *.log
